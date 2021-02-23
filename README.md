@@ -9,7 +9,7 @@ Compatible with Laravel v5x, v6x, v7x, v8x.
 You can install the package via composer:
 
 ```bash
-composer require graphlr/prepr-api-laravel
+composer require preprio/laravel-sdk
 ```
 
 #### Environment variables
@@ -35,7 +35,7 @@ The authorization can also be set for one specific request `->url('url')->author
 #### Examples
 
 ```php
-use Graphlr\Prepr\Prepr;
+use Preprio\Prepr;
 ```
 
 ##### Get All
