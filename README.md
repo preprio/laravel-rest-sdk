@@ -1,80 +1,149 @@
-# Laravel Prepr API Wrapper
+# Getting started with Laravel
 
-This Laravel package is a wrapper for the <a href="https://prepr.io">Prepr</a> API.
+This Laravel package is a provider for the Prepr API.
 
-Compatible with Laravel v5x, v6x, v7x, v8x.
+## Basics
+The SDK on [GitHub](https://github.com/preprio/laravel-sdk)  
+Compatible with Laravel `v5x`, `v6x`, `v7x`, `v8x`  
+Requires `GuzzleHttp 7.0.X`, `Murmurhash 2.0.X`
 
-#### Installation
+## Installation
 
-You can install the package via composer:
+You can install the Provider as a composer package.
 
 ```bash
 composer require preprio/laravel-sdk
 ```
 
-#### Environment variables
+## Set-up your .env file configuration
+
+You can set the default configuration in your .env file of you Laravel project.
 
 ```text
-PREPR_URL=https://api.eu1.prepr.io/
-PREPR_TOKEN=ToKeN
+PREPR_URL=https://cdn.prepr.io/
+PREPR_TOKEN={{ACCESS_TOKEN}}
+```
+
+## Laravel local caching
+
+To make use of the caching feature of Laravel, add the following parameters to your .env file.
+
+```text
 PREPR_CACHE=true
 PREPR_CACHE_TIME=1800
 ```
 
-#### Override variables
 
-For all the requests
-```php
-config(['prepr.url' => 'https://api.eu1.prepr.io/']);
-config(['prepr.token' => 'ToKeN']);
-```
+## Making your first request
 
-The authorization can also be set for one specific request `->url('url')->authorization('token')`.
-
-
-#### Examples
+Let's start with getting all publications from your Prepr Environment.
 
 ```php
+<?php
+
 use Preprio\Prepr;
-```
 
-##### Get All
+$apiRequest = new Prepr;
 
-```php
-$apiRequest = (new Prepr)
-    ->path('tags')
+$apiRequest
+    ->path('publications')
     ->query([
-        'fields' => 'example'
+        'fields' => 'items'
     ])
     ->get();
 
 if($apiRequest->getStatusCode() == 200) {
-    dump($apiRequest->getResponse());
+
+    print_r($apiRequest->getResponse());
 }
 ```
 
-##### Get Single
+
+To get a single publication, pass the Id to the request.
 
 ```php
-$apiRequest = (new Prepr)
-    ->path('tags/{id}',[
+<?php
+
+use Preprio\Prepr;
+
+$apiRequest = new Prepr;
+
+$apiRequest
+    ->path('publications/{id}', [
+        'id' => '1236f0b1-b26d-4dde-b835-9e4e441a6d09'
+    ])
+    ->query([
+        'fields' => 'items'
+    ])
+    ->get();
+
+if($apiRequest->getStatusCode() == 200) {
+
+    print_r($apiRequest->getResponse());
+}
+```
+
+## A/B testing with Optimize
+
+To enable A/B testing you can pass a User ID to provide a consistent result.
+The A/B testing feature requires the use of the cached CDN API.
+
+To switch off A/B testing, pass NULL to the UserId param.
+
+```php
+$apiRequest = new Prepr( '{{YourCustomUserId}}');
+```
+
+or per request
+
+```php
+$apiRequest
+    ->path('publications/{id}',[
         'id' => 1
     ]),
     ->query([
         'fields' => 'example'
     ])
+    ->userId(
+        session()->getId() // For Example you can use Laravel's Session ID.
+    )
     ->get();
+
+if($apiRequest->getStatusCode() == 200) {
+
+    print_r($apiRequest->getResponse());
+}
+```
+
+For more information check the [Optimize documentation](/docs/optimize/v1/introduction).
+
+
+### Override the AccessToken in a request
+
+The authorization can also be set for one specific request `->url('url')->authorization('token')`.
+
+## Autopaging
+
+```php
+$apiRequest = (new Prepr)
+    ->path('publications')
+    ->query([
+        'limit' => 200 // optional
+    ])
+    ->autoPaging();
 
 if($apiRequest->getStatusCode() == 200) {
     dump($apiRequest->getResponse());
 }
 ```
 
-##### Post
+# Create, Update & Destroy
+
+### Post
 
 ```php
 $apiRequest = (new Prepr)
-    ->path('tags')
+    ->path('publications')
     ->params([
         'body' => 'Example'
     ])
@@ -85,11 +154,11 @@ if($apiRequest->getStatusCode() == 201) {
 }
 ```
 
-##### Put
+### Put (Update)
 
 ```php
 $apiRequest = (new Prepr)
-    ->path('tags')
+    ->path('publications')
     ->params([
         'body' => 'Example'
     ])
@@ -100,11 +169,11 @@ if($apiRequest->getStatusCode() == 200) {
 }
 ```
 
-##### Delete
+### Delete
 
 ```php
 $apiRequest = (new Prepr)
-    ->path('tags/{id}',[
+    ->path('publications/{id}',[
         'id' => 1
     ])
     ->delete();
@@ -114,25 +183,7 @@ if($apiRequest->getStatusCode() == 204) {
 }
 ```
 
-##### A/B testing
-
-```php
-$apiRequest = (new Prepr)
-    ->path('tags/{id}',[
-        'id' => 1
-    ]),
-    ->query([
-        'fields' => 'example'
-    ])
-    ->userId(session()->getId())
-    ->get();
-
-if($apiRequest->getStatusCode() == 200) {
-    dump($apiRequest->getResponse());
-}
-```
-
-##### Multipart/Chunk upload
+### Multipart/Chunk upload
 
 ```php
 $apiRequest = (new Prepr)
@@ -148,27 +199,6 @@ if($apiRequest->getStatusCode() == 200) {
 }
 ```
 
-##### Autopaging
-
-```php
-$apiRequest = (new Prepr)
-    ->path('publications')
-    ->query([
-        'limit' => 200 // optional
-    ])
-    ->autoPaging();
-
-if($apiRequest->getStatusCode() == 200) {
-    dump($apiRequest->getResponse());
-}
-```
-
-
-#### Debug
+### Debug
 
 For debug you can use `getRawResponse()`
-
-
-#### Documentation
-
-<a href="https://developers.prepr.io/docs">For all the details and full documentation check out the Prepr Developer docs</a>
