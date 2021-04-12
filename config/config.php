@@ -33,18 +33,18 @@ return [
     |
     */
 
-    'cache' => env('PREPR_CACHE',false),
+    'cache' => env('PREPR_CACHE', false),
 
     /*
     |--------------------------------------------------------------------------
-    | Cache Time
+    | Cache Time in seconds
     |--------------------------------------------------------------------------
     |
-    | Default 60 seconds * 5
+    | Default 5 minutes (300 seconds)
     |
     */
 
-    'cache_time' => env('PREPR_CACHE_TIME',60*5),
+    'cache_time' => env('PREPR_CACHE_TIME', 300),
 
     /*
     |--------------------------------------------------------------------------
