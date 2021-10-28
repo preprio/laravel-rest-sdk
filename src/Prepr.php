@@ -241,8 +241,10 @@ class Prepr
             data_set($this->params, 'upload_phase', 'transfer');
             data_set($this->params, 'file_chunk', $stream);
 
-            $prepr = (new Prepr())
-                ->authorization($this->authorization)
+            $authorization = $this->authorization;
+
+            $prepr = (new self())
+                ->authorization($authorization)
                 ->path('assets/{id}/multipart', [
                     'id' => $id,
                 ])
@@ -256,8 +258,8 @@ class Prepr
 
         data_set($this->params, 'upload_phase', 'finish');
 
-        return (new Prepr())
-            ->authorization($this->authorization)
+        return (new self())
+            ->authorization($authorization)
             ->path('assets/{id}/multipart', [
                 'id' => $id,
             ])
