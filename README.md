@@ -91,12 +91,6 @@ The A/B testing feature requires the use of the cached CDN API.
 To switch off A/B testing, pass NULL to the UserId param.
 
 ```php
-$apiRequest = new Prepr( '{{YourCustomUserId}}');
-```
-
-or per request
-
-```php
 $apiRequest
     ->path('publications/{id}',[
         'id' => 1
@@ -104,7 +98,7 @@ $apiRequest
     ->query([
         'fields' => 'example'
     ])
-    ->userId(
+    ->customerId(
         session()->getId() // For Example you can use Laravel's Session ID.
     )
     ->get();

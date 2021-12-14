@@ -22,9 +22,10 @@ class Prepr
     protected $authorization;
     protected $cache;
     protected $cacheTime;
+    protected $personalisation;
     protected $file = null;
     protected $statusCode;
-    protected $userId;
+    protected $customerId;
 
     private $chunkSize = 26214400;
 
@@ -34,18 +35,29 @@ class Prepr
         $this->cacheTime = config('prepr.cache_time');
         $this->baseUrl = config('prepr.url');
         $this->authorization = config('prepr.token');
+        $this->personalisation = config('prepr.personalisation');
     }
 
     protected function client()
     {
+        $headers = array_merge(config('prepr.headers'), [
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+            'Authorization' => $this->authorization
+        ]);
+
+        if($this->customerId) {
+
+            if($this->personalisation) {
+                $headers['Prepr-Customer-Id'] = $this->customerId;
+            } else {
+                $headers['Prepr-Customer-Reference-Id'] = $this->customerId;
+            }
+        }
+
         return new Client([
             'http_errors' => false,
-            'headers' => array_merge(config('prepr.headers'), [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => $this->authorization,
-                'Prepr-ABTesting' => $this->userId
-            ])
+            'headers' => $headers
         ]);
     }
 
@@ -327,16 +339,9 @@ class Prepr
         return $this;
     }
 
-    public function hashUserId($userId)
+    public function customerId($customerId)
     {
-        $hashValue = Murmur::hash3_int($userId, 1);
-        $ratio = $hashValue / pow(2, 32);
-        return intval($ratio*10000);
-    }
-
-    public function userId($userId)
-    {
-        $this->userId = $this->hashUserId($userId);
+        $this->customerId = $customerId;
 
         return $this;
     }
