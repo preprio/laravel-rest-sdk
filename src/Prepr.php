@@ -22,7 +22,6 @@ class Prepr
     protected $authorization;
     protected $cache;
     protected $cacheTime;
-    protected $personalisation;
     protected $file = null;
     protected $statusCode;
     protected $customerId;
@@ -35,7 +34,6 @@ class Prepr
         $this->cacheTime = config('prepr.cache_time');
         $this->baseUrl = config('prepr.url');
         $this->authorization = config('prepr.token');
-        $this->personalisation = config('prepr.personalisation');
     }
 
     protected function client()
@@ -47,12 +45,7 @@ class Prepr
         ]);
 
         if($this->customerId) {
-
-            if($this->personalisation) {
-                $headers['Prepr-Customer-Id'] = $this->customerId;
-            } else {
-                $headers['Prepr-Customer-Reference-Id'] = $this->customerId;
-            }
+            $headers['Prepr-Customer-Id'] = $this->customerId;
         }
 
         return new Client([
