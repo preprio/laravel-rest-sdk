@@ -249,6 +249,7 @@ class Prepr
             $authorization = $this->authorization;
 
             $prepr = (new self())
+                ->url($this->baseUrl)
                 ->authorization($authorization)
                 ->path('assets/{id}/multipart', [
                     'id' => $id,
@@ -264,6 +265,7 @@ class Prepr
         data_set($this->params, 'upload_phase', 'finish');
 
         return (new self())
+            ->url($this->baseUrl)
             ->authorization($authorization)
             ->path('assets/{id}/multipart', [
                 'id' => $id,
@@ -279,17 +281,19 @@ class Prepr
         $perPage = 100;
         $page = 0;
         $queryLimit = data_get($this->rawQuery, 'limit');
+        $queryOffset = data_get($this->rawQuery, 'offset');
 
         $arrayItems = [];
 
         while(true) {
 
-            $query = $this->query;
+            $query = $this->rawQuery;
 
             data_set($query,'limit', $perPage);
-            data_set($query,'offset',$page*$perPage);
+            data_set($query,'offset',($queryOffset ? $queryOffset + ($page*$perPage) : $page*$perPage));
 
-            $result = (new Prepr())
+            $result = (new self())
+                ->url($this->baseUrl)
                 ->authorization($this->authorization)
                 ->path($this->path)
                 ->query($query)
@@ -304,7 +308,7 @@ class Prepr
                         $arrayItems[] = $item;
 
                         if (count($arrayItems) == $queryLimit) {
-                            break;
+                            break 2;
                         }
                     }
 
