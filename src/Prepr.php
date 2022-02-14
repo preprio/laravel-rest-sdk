@@ -235,7 +235,7 @@ class Prepr
             $offset = ($this->chunkSize * $i);
             $endOfFile = (($offset + $this->chunkSize) > $fileSize ? true : false);
 
-            $original = \GuzzleHttp\Psr7\stream_for(data_get($this->file, 'file'));
+            $original = \GuzzleHttp\Psr7\Utils::streamFor(data_get($this->file, 'file'));
             $stream = new \GuzzleHttp\Psr7\LimitStream($original, ($endOfFile ? ($fileSize - $offset) : $this->chunkSize), $offset);
 
             data_set($this->params, 'upload_phase', 'transfer');
