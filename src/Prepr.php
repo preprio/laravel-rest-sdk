@@ -85,12 +85,6 @@ class Prepr
         $this->rawResponse = $this->request->getBody()->getContents();
         $this->response = json_decode($this->rawResponse, true);
 
-
-        // Files larger then 25 MB (upload chunked)
-        if (data_get($this->file, 'chunks') > 1 && ($this->getStatusCode() === 201 || $this->getStatusCode() === 200)) {
-            return $this->processFileUpload();
-        }
-
         if ($this->cache) {
             $data = [
                 'request' => $this->request,
@@ -195,73 +189,72 @@ class Prepr
         return $this->request->getStatusCode();
     }
 
-    public function file($filepath)
+    public function file($file)
     {
-        $fileSize = filesize($filepath);
-        $file = fopen($filepath, 'r');
+        $original = \GuzzleHttp\Psr7\stream_for($file);
+        $fileSize = $original->getSize();
 
-        $this->file = [
-            'path' => $filepath,
-            'size' => $fileSize,
-            'file' => $file,
-            'chunks' => ($fileSize / $this->chunkSize),
-            'original_name' => basename($filepath),
-        ];
-
-        if ($this->file) {
-
-            // Files larger then 25 MB (upload chunked)
-            if (data_get($this->file, 'chunks') > 1) {
-                data_set($this->params, 'upload_phase', 'start');
-                data_set($this->params, 'file_size', data_get($this->file, 'size'));
-
-                // Files smaller then 25 MB (upload directly)
-            } else {
-                data_set($this->params, 'source', data_get($this->file, 'file'));
-            }
-
+        if ($fileSize > $this->chunkSize) {
+            $this->chunkUpload($original);
+        } else {
+            data_set($this->params, 'source', $original);
         }
 
         return $this;
     }
 
-    private function processFileUpload()
+    private function chunkUpload($original)
     {
-        $id = data_get($this->response, 'id');
-        $fileSize = data_get($this->file, 'size');
+        $fileSize = $original->getSize();
+        $chunks = (int)floor($fileSize / $this->chunkSize);
 
-        for ($i = 0; $i <= data_get($this->file, 'chunks'); $i++) {
+        data_set($this->params, 'upload_phase', 'start');
+        data_set($this->params, 'file_size', $fileSize);
+
+        $start = (new self())
+            ->authorization($this->authorization)
+            ->path('assets')
+            ->params($this->params)
+            ->post();
+
+        if ($start->getStatusCode() != 200 && $start->getStatusCode() != 201) {
+            return $start;
+        }
+
+        $assetId = data_get($start->getResponse(), 'id');
+
+        for ($i = 0; $i <= $chunks; $i++) {
 
             $offset = ($this->chunkSize * $i);
-            $endOfFile = (($offset + $this->chunkSize) > $fileSize ? true : false);
+            $endOfFile = $i === $chunks - 1;
+            $limit = ($endOfFile ? ($fileSize - $offset) : $this->chunkSize);
 
-            $original = \GuzzleHttp\Psr7\Utils::streamFor(data_get($this->file, 'file'));
-            $stream = new \GuzzleHttp\Psr7\LimitStream($original, ($endOfFile ? ($fileSize - $offset) : $this->chunkSize), $offset);
+            $stream = new \GuzzleHttp\Psr7\LimitStream($original, $limit, $offset);
 
-            data_set($this->params, 'upload_phase', 'transfer');
-            data_set($this->params, 'file_chunk', $stream);
+            $params = [
+                'upload_phase' => 'transfer',
+                'file_chunk' => $stream
+            ];
 
-            $authorization = $this->authorization;
-
-            $prepr = (new self())
-                ->authorization($authorization)
+            $transfer = (new self())
+                ->authorization($this->authorization)
                 ->path('assets/{id}/multipart', [
-                    'id' => $id,
+                    'id' => $assetId,
                 ])
-                ->params($this->params)
+                ->params($params)
                 ->post();
 
-            if ($prepr->getStatusCode() !== 200) {
-                return $prepr;
+            if ($transfer->getStatusCode() !== 200) {
+                return $transfer;
             }
         }
 
         data_set($this->params, 'upload_phase', 'finish');
 
         return (new self())
-            ->authorization($authorization)
+            ->authorization($this->authorization)
             ->path('assets/{id}/multipart', [
-                'id' => $id,
+                'id' => $assetId,
             ])
             ->params($this->params)
             ->post();
