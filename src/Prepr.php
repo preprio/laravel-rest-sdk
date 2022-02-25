@@ -7,6 +7,8 @@ use Cache;
 use Artisan;
 use lastguest\Murmur;
 use Session;
+use GuzzleHttp\Psr7\LimitStream;
+use GuzzleHttp\Psr7\Utils;
 
 class Prepr
 {
@@ -191,7 +193,7 @@ class Prepr
 
     public function file($file)
     {
-        $original = \GuzzleHttp\Psr7\stream_for($file);
+        $original = Utils::streamFor($file);
         $fileSize = $original->getSize();
 
         if ($fileSize > $this->chunkSize) {
@@ -229,7 +231,7 @@ class Prepr
             $endOfFile = $i === $chunks - 1;
             $limit = ($endOfFile ? ($fileSize - $offset) : $this->chunkSize);
 
-            $stream = new \GuzzleHttp\Psr7\LimitStream($original, $limit, $offset);
+            $stream = new LimitStream($original, $limit, $offset);
 
             $params = [
                 'upload_phase' => 'transfer',
