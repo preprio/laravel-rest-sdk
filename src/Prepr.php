@@ -77,8 +77,8 @@ class Prepr
         if ($this->path === 'graphql') {
             $data = [
                 'json' => [
-                    'query' => $this->params
-                ]
+                    'query' => $this->params,
+                ],
             ];
         } else if ($this->method == 'post') {
             $data = [
