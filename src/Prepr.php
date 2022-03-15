@@ -74,9 +74,17 @@ class Prepr
             'form_params' => $this->params,
         ];
 
-        if ($this->method == 'post') {
+        if ($this->method == 'post' && $this->path !== 'graphql') {
             $data = [
                 'multipart' => $this->nestedArrayToMultipart($this->params),
+            ];
+        }
+
+        if ($this->path === 'graphql') {
+            $data = [
+                'json' => [
+                    'query' => $this->params
+                ]
             ];
         }
 
@@ -173,6 +181,13 @@ class Prepr
     public function params(array $array)
     {
         $this->params = $array;
+
+        return $this;
+    }
+
+    public function graphQL(string $query)
+    {
+        $this->params = $query;
 
         return $this;
     }
