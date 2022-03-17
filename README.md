@@ -209,7 +209,6 @@ if($apiRequest->getStatusCode() == 200) {
 
 ```php
 $apiRequest = (new Prepr)
-    ->path('graphql')
     ->graphQL('{
     ModelName(id:"xxx-xxx") {
         _id

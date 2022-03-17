@@ -185,6 +185,7 @@ class Prepr
 
     public function graphQL(string $query)
     {
+        $this->path = 'graphql';
         $this->params = $query;
 
         return $this;
