@@ -15,7 +15,13 @@ You can install the Provider as a composer package.
 composer require preprio/laravel-sdk
 ```
 
-## Set-up your .env file configuration
+### Publish config
+Publish `prepr.php` config
+```
+php artisan vendor:publish --provider="Preprio\PreprServiceProvider"
+```
+
+## Set up your .env file configuration
 
 You can set the default configuration in your .env file of you Laravel project.
 
@@ -193,6 +199,22 @@ $apiRequest = (new Prepr)
     ])
     ->file('/path/to/file.txt') // For laravel storage: storage_path('app/file.ext')
     ->post();
+
+if($apiRequest->getStatusCode() == 200) {
+    dump($apiRequest->getResponse());
+}
+```
+
+# GraphQL
+
+```php
+$apiRequest = (new Prepr)
+    ->graphQL('{
+    ModelName(id:"xxx-xxx") {
+        _id
+        _slug
+    }
+}')->post();
 
 if($apiRequest->getStatusCode() == 200) {
     dump($apiRequest->getResponse());
