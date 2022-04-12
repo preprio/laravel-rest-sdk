@@ -24,7 +24,6 @@ class Prepr
     protected $authorization;
     protected $cache;
     protected $cacheTime;
-    protected $file = null;
     protected $statusCode;
     protected $userId;
 
@@ -211,12 +210,16 @@ class Prepr
         $fileSize = $original->getSize();
 
         if ($fileSize > $this->chunkSize) {
-            $this->chunkUpload($original);
+            return $this->chunkUpload($original);
         } else {
             data_set($this->params, 'source', $original);
-        }
 
-        return $this;
+            return (new self())
+                ->authorization($this->authorization)
+                ->path('assets')
+                ->params($this->params)
+                ->post();
+        }
     }
 
     private function chunkUpload($original)

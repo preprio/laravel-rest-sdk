@@ -197,8 +197,7 @@ $apiRequest = (new Prepr)
     ->params([
       'body' => 'Example',
     ])
-    ->file('/path/to/file.txt') // For laravel storage: storage_path('app/file.ext')
-    ->post();
+    ->file('/path/to/file.txt');
 
 if($apiRequest->getStatusCode() == 200) {
     dump($apiRequest->getResponse());
