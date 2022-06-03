@@ -210,7 +210,7 @@ class Prepr
         $fileSize = $original->getSize();
 
         if ($fileSize > $this->chunkSize) {
-            return $this->chunkUpload($original);
+            return $this->chunkUpload($original,$fileSize);
         } else {
             data_set($this->params, 'source', $original);
 
@@ -222,9 +222,8 @@ class Prepr
         }
     }
 
-    private function chunkUpload($original)
+    private function chunkUpload($original, $fileSize)
     {
-        $fileSize = $original->getSize();
         $chunks = (int)floor($fileSize / $this->chunkSize);
 
         data_set($this->params, 'upload_phase', 'start');
