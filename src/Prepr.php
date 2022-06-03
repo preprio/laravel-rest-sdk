@@ -245,7 +245,7 @@ class Prepr
         for ($i = 0; $i <= $chunks; $i++) {
 
             $offset = ($this->chunkSize * $i);
-            $endOfFile = $i === $chunks - 1;
+            $endOfFile = $i === $chunks;
             $limit = ($endOfFile ? ($fileSize - $offset) : $this->chunkSize);
 
             $stream = new LimitStream($original, $limit, $offset);
