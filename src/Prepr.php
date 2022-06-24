@@ -76,9 +76,7 @@ class Prepr
 
         if ($this->path === 'graphql') {
             $data = [
-                'json' => [
-                    'query' => $this->params,
-                ],
+                'body' => json_encode($this->params)
             ];
         } else if ($this->method == 'post') {
             $data = [
@@ -183,10 +181,11 @@ class Prepr
         return $this;
     }
 
-    public function graphQL(string $query)
+    public function graphQL(string $query, array $variables = [])
     {
         $this->path = 'graphql';
-        $this->params = $query;
+        $this->params['query'] = $query;
+        $this->params['variables'] = $variables;
 
         return $this;
     }

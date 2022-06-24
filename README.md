@@ -221,6 +221,20 @@ if($apiRequest->getStatusCode() == 200) {
 }
 ```
 
+```php
+$apiRequest = (new Prepr)
+    ->graphQL('query($id: String) {
+  ModelName(id: $id) {
+        _id
+        _slug
+    }
+}', ['id' => 'xxx-xxx'])->post();
+
+if($apiRequest->getStatusCode() == 200) {
+    dump($apiRequest->getResponse());
+}
+```
+
 ### Debug
 
 For debug you can use `getRawResponse()`
