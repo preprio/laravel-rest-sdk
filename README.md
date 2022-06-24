@@ -11,6 +11,12 @@ Requires `GuzzleHttp 7.0.X`, `Murmurhash 2.0.X`
 
 You can install the Provider as a composer package.
 
+For Laravel v9x
+
+```bash
+composer require preprio/laravel-sdk:"2.0"
+```
+
 ```bash
 composer require preprio/laravel-sdk
 ```
