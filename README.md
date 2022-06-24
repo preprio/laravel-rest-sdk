@@ -210,9 +210,11 @@ if($apiRequest->getStatusCode() == 200) {
 ```php
 $apiRequest = (new Prepr)
     ->graphQL('{
-    ModelName(id:"xxx-xxx") {
-        _id
-        _slug
+    ModelNames {
+        items {
+            _id
+            _slug
+        }
     }
 }')->post();
 
@@ -221,6 +223,7 @@ if($apiRequest->getStatusCode() == 200) {
 }
 ```
 
+GraphQL query with variables.
 ```php
 $apiRequest = (new Prepr)
     ->graphQL('query($id: String) {
