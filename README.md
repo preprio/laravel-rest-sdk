@@ -17,6 +17,8 @@ For Laravel v9x
 composer require preprio/laravel-sdk:"2.0"
 ```
 
+Other versions
+
 ```bash
 composer require preprio/laravel-sdk
 ```
