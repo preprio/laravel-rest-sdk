@@ -2,22 +2,22 @@
 
 namespace Preprio;
 
-use GuzzleHttp\Client;
 use Cache;
 use Artisan;
 use lastguest\Murmur;
 use Session;
 use GuzzleHttp\Psr7\LimitStream;
 use GuzzleHttp\Psr7\Utils;
+use Illuminate\Support\Facades\Http;
 
 class Prepr
 {
     protected $baseUrl;
+    protected $url;
     protected $path;
     protected $query;
-    protected $rawQuery;
     protected $method;
-    protected $params = [];
+    protected $params;
     protected $response;
     protected $rawResponse;
     protected $request;
@@ -26,6 +26,7 @@ class Prepr
     protected $cacheTime;
     protected $statusCode;
     protected $userId;
+    protected $attach;
 
     private $chunkSize = 26214400;
 
@@ -39,25 +40,21 @@ class Prepr
 
     protected function client()
     {
-        return new Client([
-            'http_errors' => false,
-            'headers' => array_merge(config('prepr.headers'), [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => $this->authorization,
+        return Http::acceptJson()
+            ->withToken($this->authorization)
+            ->withHeaders(array_merge(config('prepr.headers'), [
                 'Prepr-ABTesting' => $this->userId
-            ])
-        ]);
+            ]));
     }
 
-    protected function request($options = [])
+    protected function request()
     {
-        $url = $this->baseUrl . $this->path;
+        $this->url = $this->baseUrl . $this->path . ($this->query ? '?' . http_build_query($this->query) : '');
 
         $cacheHash = null;
         if ($this->method == 'get' && $this->cache) {
 
-            $cacheHash = md5($url . $this->authorization . $this->userId . $this->query);
+            $cacheHash = md5($url . $this->authorization . $this->userId);
             if (Cache::has($cacheHash)) {
 
                 $data = Cache::get($cacheHash);
@@ -71,25 +68,13 @@ class Prepr
 
         $this->client = $this->client();
 
-        $data = [
-            'form_params' => $this->params,
-        ];
-
-        if ($this->path === 'graphql') {
-            $data = [
-                'json' => [
-                    'query' => $this->params,
-                ],
-            ];
-        } else if ($this->method == 'post') {
-            $data = [
-                'multipart' => $this->nestedArrayToMultipart($this->params),
-            ];
+        if($this->attach) {
+            $this->client->attach(key($this->attach), head($this->attach));
         }
 
-        $this->request = $this->client->request($this->method, $url . $this->query, $data);
+        $this->request = $this->client->{$this->method}($this->url, $this->params);
 
-        $this->rawResponse = $this->request->getBody()->getContents();
+        $this->rawResponse = $this->request->body();
         $this->response = json_decode($this->rawResponse, true);
 
         if ($this->cache) {
@@ -103,14 +88,14 @@ class Prepr
         return $this;
     }
 
-    public function authorization($authorization)
+    public function authorization(string $authorization)
     {
         $this->authorization = $authorization;
 
         return $this;
     }
 
-    public function url($url)
+    public function url(string $url)
     {
         $this->baseUrl = $url;
 
@@ -145,7 +130,7 @@ class Prepr
         return $this->request();
     }
 
-    public function path($path = null, array $array = [])
+    public function path(string $path = null, array $array = [])
     {
         foreach ($array as $key => $value) {
             $path = str_replace('{' . $key . '}', $value, $path);
@@ -156,7 +141,7 @@ class Prepr
         return $this;
     }
 
-    public function method($method = null)
+    public function method(string $method = null)
     {
         $this->method = $method;
 
@@ -165,8 +150,7 @@ class Prepr
 
     public function query(array $array)
     {
-        $this->rawQuery = $array;
-        $this->query = '?' . http_build_query($array);
+        $this->query = $array;
 
         return $this;
     }
@@ -178,10 +162,11 @@ class Prepr
         return $this;
     }
 
-    public function graphQL(string $query)
+    public function graphQL(string $query, array $variables = [])
     {
         $this->path = 'graphql';
-        $this->params = $query;
+        $this->params['query'] = $query;
+        $this->params['variables'] = $variables;
 
         return $this;
     }
@@ -212,13 +197,13 @@ class Prepr
         if ($fileSize > $this->chunkSize) {
             return $this->chunkUpload($original,$fileSize);
         } else {
-            data_set($this->params, 'source', $original);
 
-            return (new self())
-                ->authorization($this->authorization)
-                ->path('assets')
-                ->params($this->params)
-                ->post();
+            $this->attach = [
+                'source' => $original
+            ];
+
+            return $this->post();
+
         }
     }
 
@@ -226,15 +211,12 @@ class Prepr
     {
         $chunks = (int)floor($fileSize / $this->chunkSize);
 
-        data_set($this->params, 'upload_phase', 'start');
-        data_set($this->params, 'file_size', $fileSize);
+        $this->params = [
+            'upload_phase' => 'start',
+            'file_size' => $fileSize
+        ];
 
-        $start = (new self())
-            ->authorization($this->authorization)
-            ->path('assets')
-            ->params($this->params)
-            ->post();
-
+        $start = $this->post();
         if ($start->getStatusCode() != 200 && $start->getStatusCode() != 201) {
             return $start;
         }
@@ -249,58 +231,49 @@ class Prepr
 
             $stream = new LimitStream($original, $limit, $offset);
 
-            $params = [
-                'upload_phase' => 'transfer',
+            $this->path('assets/' . $assetId);
+
+            $this->params = [
+                'upload_phase' => 'transfer'
+            ];
+
+            $this->attach = [
                 'file_chunk' => $stream
             ];
 
-            $transfer = (new self())
-                ->authorization($this->authorization)
-                ->path('assets/{id}/multipart', [
-                    'id' => $assetId,
-                ])
-                ->params($params)
-                ->post();
-
+            $transfer = $this->post();
             if ($transfer->getStatusCode() !== 200) {
                 return $transfer;
             }
         }
 
-        data_set($this->params, 'upload_phase', 'finish');
+        $this->params = [
+            'upload_phase' => 'finish'
+        ];
 
-        return (new self())
-            ->authorization($this->authorization)
-            ->path('assets/{id}/multipart', [
-                'id' => $assetId,
-            ])
-            ->params($this->params)
-            ->post();
+        $this->post();
+
+        return $this;
     }
 
     public function autoPaging()
     {
-        $this->method = 'get';
-
         $perPage = 100;
         $page = 0;
-        $queryLimit = data_get($this->rawQuery, 'limit');
+        $queryLimit = data_get($this->query, 'limit');
 
         $arrayItems = [];
 
         while(true) {
 
-            $query = $this->query;
+            $queryOffset = data_get($this->query, 'offset');
 
-            data_set($query,'limit', $perPage);
-            data_set($query,'offset',$page*$perPage);
+            $this->query = array_merge($this->query,[
+                'limit' => $perPage,
+                'offset' => ($queryOffset ? $queryOffset + ($page*$perPage) : $page*$perPage)
+            ]);
 
-            $result = (new Prepr())
-                ->authorization($this->authorization)
-                ->path($this->path)
-                ->query($query)
-                ->get();
-
+            $result = $this->get();
             if($result->getStatusCode() == 200) {
 
                 $items = data_get($result->getResponse(),'items');
@@ -310,7 +283,7 @@ class Prepr
                         $arrayItems[] = $item;
 
                         if (count($arrayItems) == $queryLimit) {
-                            break;
+                            break 2;
                         }
                     }
 
@@ -350,41 +323,6 @@ class Prepr
         $this->userId = $this->hashUserId($userId);
 
         return $this;
-    }
-
-    public function nestedArrayToMultipart($array)
-    {
-        $flatten = function ($array, $original_key = '') use (&$flatten) {
-            $output = [];
-            foreach ($array as $key => $value) {
-                $new_key = $original_key;
-                if (empty($original_key)) {
-                    $new_key .= $key;
-                } else {
-                    $new_key .= '[' . $key . ']';
-                }
-
-                if (is_array($value)) {
-                    $output = array_merge($output, $flatten($value, $new_key));
-                } else {
-                    $output[$new_key] = $value;
-                }
-            }
-
-            return $output;
-        };
-
-        $flat_array = $flatten($array);
-
-        $multipart = [];
-        foreach ($flat_array as $key => $value) {
-            $multipart[] = [
-                'name' => $key,
-                'contents' => $value,
-            ];
-        }
-
-        return $multipart;
     }
 
     public function clearCache()
