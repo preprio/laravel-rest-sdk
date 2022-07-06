@@ -17,10 +17,16 @@ For Laravel v9x
 composer require preprio/laravel-sdk:"2.0"
 ```
 
+For Laravel v8x
+
+```bash
+composer require preprio/laravel-sdk:"1.3"
+```
+
 Other versions
 
 ```bash
-composer require preprio/laravel-sdk
+composer require preprio/laravel-sdk:"1.1"
 ```
 
 ### Publish config
