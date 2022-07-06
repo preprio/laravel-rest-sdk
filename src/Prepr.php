@@ -168,7 +168,7 @@ class Prepr
         $this->params['query'] = $query;
         $this->params['variables'] = $variables;
 
-        return $this;
+        return $this->post();
     }
 
     public function getResponse()

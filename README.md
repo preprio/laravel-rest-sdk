@@ -199,13 +199,26 @@ if($apiRequest->getStatusCode() == 204) {
 
 ### Multipart/Chunk upload
 
+- Option 1
+```php
+use Illuminate\Support\Facades\Storage;
+
+$source = Storage::readStream('image.jpg')
+```
+- Option 2
+```php
+use Illuminate\Support\Facades\Storage;
+
+$source = Storage::get('image.jpg')
+```
+
 ```php
 $apiRequest = (new Prepr)
     ->path('assets')
     ->params([
       'body' => 'Example',
     ])
-    ->file('/path/to/file.txt');
+    ->file($source);
 
 if($apiRequest->getStatusCode() == 200) {
     dump($apiRequest->getResponse());
@@ -221,7 +234,7 @@ $apiRequest = (new Prepr)
         _id
         _slug
     }
-}')->post();
+}');
 
 if($apiRequest->getStatusCode() == 200) {
     dump($apiRequest->getResponse());
