@@ -2,29 +2,31 @@
 
 namespace Preprio;
 
-use GuzzleHttp\Client;
 use Cache;
 use Artisan;
 use lastguest\Murmur;
 use Session;
+use GuzzleHttp\Psr7\LimitStream;
+use GuzzleHttp\Psr7\Utils;
+use Illuminate\Support\Facades\Http;
 
 class Prepr
 {
     protected $baseUrl;
+    protected $url;
     protected $path;
     protected $query;
-    protected $rawQuery;
     protected $method;
-    protected $params = [];
+    protected $params;
     protected $response;
     protected $rawResponse;
     protected $request;
     protected $authorization;
     protected $cache;
     protected $cacheTime;
-    protected $file = null;
     protected $statusCode;
     protected $userId;
+    protected $attach;
 
     private $chunkSize = 26214400;
 
@@ -38,25 +40,21 @@ class Prepr
 
     protected function client()
     {
-        return new Client([
-            'http_errors' => false,
-            'headers' => array_merge(config('prepr.headers'), [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => $this->authorization,
+        return Http::acceptJson()
+            ->withToken($this->authorization)
+            ->withHeaders(array_merge(config('prepr.headers'), [
                 'Prepr-ABTesting' => $this->userId
-            ])
-        ]);
+            ]));
     }
 
-    protected function request($options = [])
+    protected function request()
     {
-        $url = $this->baseUrl . $this->path;
+        $this->url = $this->baseUrl . $this->path . ($this->query ? '?' . http_build_query($this->query) : '');
 
         $cacheHash = null;
         if ($this->method == 'get' && $this->cache) {
 
-            $cacheHash = md5($url . $this->authorization . $this->userId . $this->query);
+            $cacheHash = md5($url . $this->authorization . $this->userId);
             if (Cache::has($cacheHash)) {
 
                 $data = Cache::get($cacheHash);
@@ -70,32 +68,14 @@ class Prepr
 
         $this->client = $this->client();
 
-        $data = [
-            'form_params' => $this->params,
-        ];
-
-        if ($this->path === 'graphql') {
-            $data = [
-                'json' => [
-                    'query' => $this->params,
-                ],
-            ];
-        } else if ($this->method == 'post') {
-            $data = [
-                'multipart' => $this->nestedArrayToMultipart($this->params),
-            ];
+        if($this->attach) {
+            $this->client->attach(data_get($this->attach,'name'), data_get($this->attach,'contents'), data_get($this->attach,'filename'));
         }
 
-        $this->request = $this->client->request($this->method, $url . $this->query, $data);
+        $this->request = $this->client->{$this->method}($this->url, $this->params);
 
-        $this->rawResponse = $this->request->getBody()->getContents();
+        $this->rawResponse = $this->request->body();
         $this->response = json_decode($this->rawResponse, true);
-
-
-        // Files larger then 25 MB (upload chunked)
-        if (data_get($this->file, 'chunks') > 1 && ($this->getStatusCode() === 201 || $this->getStatusCode() === 200)) {
-            return $this->processFileUpload();
-        }
 
         if ($this->cache) {
             $data = [
@@ -108,14 +88,14 @@ class Prepr
         return $this;
     }
 
-    public function authorization($authorization)
+    public function authorization(string $authorization)
     {
         $this->authorization = $authorization;
 
         return $this;
     }
 
-    public function url($url)
+    public function url(string $url)
     {
         $this->baseUrl = $url;
 
@@ -150,7 +130,7 @@ class Prepr
         return $this->request();
     }
 
-    public function path($path = null, array $array = [])
+    public function path(string $path = null, array $array = [])
     {
         foreach ($array as $key => $value) {
             $path = str_replace('{' . $key . '}', $value, $path);
@@ -161,7 +141,7 @@ class Prepr
         return $this;
     }
 
-    public function method($method = null)
+    public function method(string $method = null)
     {
         $this->method = $method;
 
@@ -170,8 +150,7 @@ class Prepr
 
     public function query(array $array)
     {
-        $this->rawQuery = $array;
-        $this->query = '?' . http_build_query($array);
+        $this->query = $array;
 
         return $this;
     }
@@ -183,12 +162,13 @@ class Prepr
         return $this;
     }
 
-    public function graphQL(string $query)
+    public function graphQL(string $query, array $variables = [])
     {
         $this->path = 'graphql';
-        $this->params = $query;
+        $this->params['query'] = $query;
+        $this->params['variables'] = $variables;
 
-        return $this;
+        return $this->post();
     }
 
     public function getResponse()
@@ -209,101 +189,95 @@ class Prepr
         return $this->request->getStatusCode();
     }
 
-    public function file($filepath)
+    public function file($file, $filename = null)
     {
-        $fileSize = filesize($filepath);
-        $file = fopen($filepath, 'r');
+        $original = Utils::streamFor($file);
+        $fileSize = $original->getSize();
 
-        $this->file = [
-            'path' => $filepath,
-            'size' => $fileSize,
-            'file' => $file,
-            'chunks' => ($fileSize / $this->chunkSize),
-            'original_name' => basename($filepath),
-        ];
+        if ($fileSize > $this->chunkSize) {
+            return $this->chunkUpload($original,$fileSize);
+        } else {
 
-        if ($this->file) {
+            $this->attach = [
+                'name' => 'source',
+                'contents' => $original,
+                'filename' => $filename
+            ];
 
-            // Files larger then 25 MB (upload chunked)
-            if (data_get($this->file, 'chunks') > 1) {
-                data_set($this->params, 'upload_phase', 'start');
-                data_set($this->params, 'file_size', data_get($this->file, 'size'));
-
-                // Files smaller then 25 MB (upload directly)
-            } else {
-                data_set($this->params, 'source', data_get($this->file, 'file'));
-            }
+            return $this->post();
 
         }
+    }
+
+    private function chunkUpload($original, $fileSize, $filename = null)
+    {
+        $chunks = (int)floor($fileSize / $this->chunkSize);
+
+        $this->params = [
+            'upload_phase' => 'start',
+            'file_size' => $fileSize
+        ];
+
+        $start = $this->post();
+        if ($start->getStatusCode() != 200 && $start->getStatusCode() != 201) {
+            return $start;
+        }
+
+        $assetId = data_get($start->getResponse(), 'id');
+
+        for ($i = 0; $i <= $chunks; $i++) {
+
+            $offset = ($this->chunkSize * $i);
+            $endOfFile = $i === $chunks;
+            $limit = ($endOfFile ? ($fileSize - $offset) : $this->chunkSize);
+
+            $stream = new LimitStream($original, $limit, $offset);
+
+            $this->path('assets/' . $assetId);
+
+            $this->params = [
+                'upload_phase' => 'transfer'
+            ];
+
+            $this->attach = [
+                'name' => 'file_chunk',
+                'contents' => $stream,
+                'filename' => $filename
+            ];
+
+            $transfer = $this->post();
+            if ($transfer->getStatusCode() !== 200) {
+                return $transfer;
+            }
+        }
+
+        $this->params = [
+            'upload_phase' => 'finish'
+        ];
+
+        $this->post();
 
         return $this;
     }
 
-    private function processFileUpload()
-    {
-        $id = data_get($this->response, 'id');
-        $fileSize = data_get($this->file, 'size');
-
-        for ($i = 0; $i <= data_get($this->file, 'chunks'); $i++) {
-
-            $offset = ($this->chunkSize * $i);
-            $endOfFile = (($offset + $this->chunkSize) > $fileSize ? true : false);
-
-            $original = \GuzzleHttp\Psr7\Utils::streamFor(data_get($this->file, 'file'));
-            $stream = new \GuzzleHttp\Psr7\LimitStream($original, ($endOfFile ? ($fileSize - $offset) : $this->chunkSize), $offset);
-
-            data_set($this->params, 'upload_phase', 'transfer');
-            data_set($this->params, 'file_chunk', $stream);
-
-            $authorization = $this->authorization;
-
-            $prepr = (new self())
-                ->authorization($authorization)
-                ->path('assets/{id}/multipart', [
-                    'id' => $id,
-                ])
-                ->params($this->params)
-                ->post();
-
-            if ($prepr->getStatusCode() !== 200) {
-                return $prepr;
-            }
-        }
-
-        data_set($this->params, 'upload_phase', 'finish');
-
-        return (new self())
-            ->authorization($authorization)
-            ->path('assets/{id}/multipart', [
-                'id' => $id,
-            ])
-            ->params($this->params)
-            ->post();
-    }
-
     public function autoPaging()
     {
-        $this->method = 'get';
-
         $perPage = 100;
         $page = 0;
-        $queryLimit = data_get($this->rawQuery, 'limit');
+        $queryLimit = data_get($this->query, 'limit');
 
         $arrayItems = [];
 
         while(true) {
 
-            $query = $this->query;
+            $queryOffset = data_get($this->query, 'offset');
 
-            data_set($query,'limit', $perPage);
-            data_set($query,'offset',$page*$perPage);
+            $this->query = array_merge($this->query,[
+                'limit' => $perPage,
+                'offset' => ($queryOffset ? $queryOffset + ($page*$perPage) : $page*$perPage)
+            ]);
 
-            $result = (new Prepr())
-                ->authorization($this->authorization)
-                ->path($this->path)
-                ->query($query)
-                ->get();
-
+            $result = $this->get();
             if($result->getStatusCode() == 200) {
 
                 $items = data_get($result->getResponse(),'items');
@@ -313,7 +287,7 @@ class Prepr
                         $arrayItems[] = $item;
 
                         if (count($arrayItems) == $queryLimit) {
-                            break;
+                            break 2;
                         }
                     }
 
@@ -353,41 +327,6 @@ class Prepr
         $this->userId = $this->hashUserId($userId);
 
         return $this;
-    }
-
-    public function nestedArrayToMultipart($array)
-    {
-        $flatten = function ($array, $original_key = '') use (&$flatten) {
-            $output = [];
-            foreach ($array as $key => $value) {
-                $new_key = $original_key;
-                if (empty($original_key)) {
-                    $new_key .= $key;
-                } else {
-                    $new_key .= '[' . $key . ']';
-                }
-
-                if (is_array($value)) {
-                    $output = array_merge($output, $flatten($value, $new_key));
-                } else {
-                    $output[$new_key] = $value;
-                }
-            }
-
-            return $output;
-        };
-
-        $flat_array = $flatten($array);
-
-        $multipart = [];
-        foreach ($flat_array as $key => $value) {
-            $multipart[] = [
-                'name' => $key,
-                'contents' => $value,
-            ];
-        }
-
-        return $multipart;
     }
 
     public function clearCache()

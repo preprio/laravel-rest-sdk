@@ -11,6 +11,14 @@ Requires `GuzzleHttp 7.0.X`, `Murmurhash 2.0.X`
 
 You can install the Provider as a composer package.
 
+For Laravel v9x
+
+```bash
+composer require preprio/laravel-sdk:"2.0"
+```
+
+Other versions
+
 ```bash
 composer require preprio/laravel-sdk
 ```
@@ -191,14 +199,35 @@ if($apiRequest->getStatusCode() == 204) {
 
 ### Multipart/Chunk upload
 
+- Option 1
 ```php
+use Illuminate\Support\Facades\Storage;
+
+$source = Storage::readStream('image.jpg');
+
 $apiRequest = (new Prepr)
     ->path('assets')
     ->params([
       'body' => 'Example',
     ])
-    ->file('/path/to/file.txt') // For laravel storage: storage_path('app/file.ext')
-    ->post();
+    ->file($source);
+
+if($apiRequest->getStatusCode() == 200) {
+    dump($apiRequest->getResponse());
+}
+```
+- Option 2
+```php
+use Illuminate\Support\Facades\Storage;
+
+$source = Storage::get('image.jpg');
+
+$apiRequest = (new Prepr)
+    ->path('assets')
+    ->params([
+      'body' => 'Example',
+    ])
+    ->file($source, 'image.jpg');
 
 if($apiRequest->getStatusCode() == 200) {
     dump($apiRequest->getResponse());
@@ -214,7 +243,7 @@ $apiRequest = (new Prepr)
         _id
         _slug
     }
-}')->post();
+}');
 
 if($apiRequest->getStatusCode() == 200) {
     dump($apiRequest->getResponse());
