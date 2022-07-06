@@ -69,7 +69,7 @@ class Prepr
         $this->client = $this->client();
 
         if($this->attach) {
-            $this->client->attach(key($this->attach), head($this->attach));
+            $this->client->attach(data_get($this->attach,'name'), data_get($this->attach,'contents'), data_get($this->attach,'filename'));
         }
 
         $this->request = $this->client->{$this->method}($this->url, $this->params);
@@ -189,7 +189,7 @@ class Prepr
         return $this->request->getStatusCode();
     }
 
-    public function file($file)
+    public function file($file, $filename = null)
     {
         $original = Utils::streamFor($file);
         $fileSize = $original->getSize();
@@ -199,7 +199,9 @@ class Prepr
         } else {
 
             $this->attach = [
-                'source' => $original
+                'name' => 'source',
+                'contents' => $original,
+                'filename' => $filename
             ];
 
             return $this->post();
@@ -207,7 +209,7 @@ class Prepr
         }
     }
 
-    private function chunkUpload($original, $fileSize)
+    private function chunkUpload($original, $fileSize, $filename = null)
     {
         $chunks = (int)floor($fileSize / $this->chunkSize);
 
@@ -238,7 +240,9 @@ class Prepr
             ];
 
             $this->attach = [
-                'file_chunk' => $stream
+                'name' => 'file_chunk',
+                'contents' => $stream,
+                'filename' => $filename
             ];
 
             $transfer = $this->post();

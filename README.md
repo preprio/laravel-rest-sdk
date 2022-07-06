@@ -203,22 +203,31 @@ if($apiRequest->getStatusCode() == 204) {
 ```php
 use Illuminate\Support\Facades\Storage;
 
-$source = Storage::readStream('image.jpg')
-```
-- Option 2
-```php
-use Illuminate\Support\Facades\Storage;
+$source = Storage::readStream('image.jpg');
 
-$source = Storage::get('image.jpg')
-```
-
-```php
 $apiRequest = (new Prepr)
     ->path('assets')
     ->params([
       'body' => 'Example',
     ])
     ->file($source);
+
+if($apiRequest->getStatusCode() == 200) {
+    dump($apiRequest->getResponse());
+}
+```
+- Option 2
+```php
+use Illuminate\Support\Facades\Storage;
+
+$source = Storage::get('image.jpg');
+
+$apiRequest = (new Prepr)
+    ->path('assets')
+    ->params([
+      'body' => 'Example',
+    ])
+    ->file($source, 'image.jpg');
 
 if($apiRequest->getStatusCode() == 200) {
     dump($apiRequest->getResponse());
