@@ -56,7 +56,7 @@ PREPR_CACHE_TIME=1800
 
 ## Making your first request
 
-Let's start with getting all publications from your Prepr Environment.
+Let's start with getting all content items from your Prepr Environment.
 
 ```php
 <?php
@@ -79,7 +79,7 @@ if($apiRequest->getStatusCode() == 200) {
 ```
 
 
-To get a single publication, pass the Id to the request.
+To get a single content item, pass the Id to the request.
 
 ```php
 <?php
@@ -103,7 +103,7 @@ if($apiRequest->getStatusCode() == 200) {
 }
 ```
 
-## A/B testing with Optimize
+## A/B testing
 
 To enable A/B testing you can pass a User ID to provide a consistent result.
 The A/B testing feature requires the use of the cached CDN API.
@@ -135,7 +135,7 @@ if($apiRequest->getStatusCode() == 200) {
 }
 ```
 
-For more information check the [Optimize documentation](/docs/optimize/v1/introduction).
+For more information check the [A/B testing documentation](https://docs.prepr.io/docs/digging-deeper/v1/ab-testing).
 
 
 ### Override the AccessToken in a request
