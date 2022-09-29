@@ -54,7 +54,7 @@ class Prepr
         $cacheHash = null;
         if ($this->method == 'get' && $this->cache) {
 
-            $cacheHash = md5($url . $this->authorization . $this->userId);
+            $cacheHash = md5($this->url . $this->authorization . $this->userId);
             if (Cache::has($cacheHash)) {
 
                 $data = Cache::get($cacheHash);
@@ -69,10 +69,26 @@ class Prepr
         $this->client = $this->client();
 
         if($this->attach) {
-            $this->client->attach(data_get($this->attach,'name'), data_get($this->attach,'contents'), data_get($this->attach,'filename'));
+
+            //Fix for laravel bug https://github.com/laravel/framework/issues/43710
+            data_set($this->params, data_get($this->attach,'name'), data_get($this->attach,'contents'));
+            //End fix for laravel
+
+            //$this->client->attach(data_get($this->attach,'name'), data_get($this->attach,'contents'), data_get($this->attach,'filename'));
         }
 
-        $this->request = $this->client->{$this->method}($this->url, $this->params);
+        $data = $this->params;
+
+        //Fix for laravel bug https://github.com/laravel/framework/issues/43710
+        if ($this->method == 'post') {
+
+            $this->client->asMultipart();
+
+            $data = $this->nestedArrayToMultipart($this->params);
+        }
+        //End fix for laravel
+
+        $this->request = $this->client->{$this->method}($this->url, $data);
 
         $this->rawResponse = $this->request->body();
         $this->response = json_decode($this->rawResponse, true);
