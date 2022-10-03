@@ -229,10 +229,8 @@ class Prepr
     {
         $chunks = (int)floor($fileSize / $this->chunkSize);
 
-        $this->params = [
-            'upload_phase' => 'start',
-            'file_size' => $fileSize
-        ];
+        $this->params['upload_phase'] = 'start';
+        $this->params['file_size'] = $fileSize;
 
         $start = $this->post();
         if ($start->getStatusCode() != 200 && $start->getStatusCode() != 201) {
