@@ -15,7 +15,7 @@ class Prepr
     protected $baseUrl;
     protected $url;
     protected $path;
-    protected $query;
+    protected $query = [];
     protected $method;
     protected $params;
     protected $response;
