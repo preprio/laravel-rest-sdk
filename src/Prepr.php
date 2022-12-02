@@ -84,7 +84,9 @@ class Prepr
 
             $this->client->asMultipart();
 
-            $data = $this->nestedArrayToMultipart($this->params);
+            if($this->params) {
+                $data = $this->nestedArrayToMultipart($this->params);
+            }
         }
         //End fix for laravel
 
@@ -205,7 +207,7 @@ class Prepr
         return $this->request->getStatusCode();
     }
 
-    public function file($file, $filename = null)
+    public function file($file, string $filename = null)
     {
         $original = Utils::streamFor($file);
         $fileSize = $original->getSize();
@@ -225,7 +227,7 @@ class Prepr
         }
     }
 
-    private function chunkUpload($original, $fileSize, $filename = null)
+    private function chunkUpload($original, int $fileSize, string $filename = null)
     {
         $chunks = (int)floor($fileSize / $this->chunkSize);
 
@@ -329,21 +331,21 @@ class Prepr
         return $this;
     }
 
-    public function hashUserId($userId)
+    public function hashUserId(string $userId)
     {
         $hashValue = Murmur::hash3_int($userId, 1);
         $ratio = $hashValue / pow(2, 32);
         return intval($ratio*10000);
     }
 
-    public function userId($userId)
+    public function userId(string $userId)
     {
         $this->userId = $this->hashUserId($userId);
 
         return $this;
     }
 
-    public function nestedArrayToMultipart($array)
+    public function nestedArrayToMultipart(array $array)
     {
         $flatten = function ($array, $original_key = '') use (&$flatten) {
             $output = [];
