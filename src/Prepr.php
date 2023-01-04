@@ -16,6 +16,7 @@ class Prepr
     protected $url;
     protected $path;
     protected $query = [];
+    protected $headers = [];
     protected $method;
     protected $params;
     protected $response;
@@ -24,6 +25,7 @@ class Prepr
     protected $authorization;
     protected $cache;
     protected $cacheTime;
+    protected $cacheTag;
     protected $statusCode;
     protected $userId;
     protected $attach;
@@ -34,17 +36,22 @@ class Prepr
     {
         $this->cache = config('prepr.cache');
         $this->cacheTime = config('prepr.cache_time');
+        $this->cacheTag = config('prepr.cache_tag');
         $this->baseUrl = config('prepr.url');
         $this->authorization = config('prepr.token');
     }
 
     protected function client()
     {
+        $headers = array_merge(config('prepr.headers'), $this->headers);
+
+        if($this->userId) {
+            $headers['Prepr-ABTesting'] = $this->userId;
+        }
+
         return Http::acceptJson()
             ->withToken($this->authorization)
-            ->withHeaders(array_merge(config('prepr.headers'), [
-                'Prepr-ABTesting' => $this->userId
-            ]));
+            ->withHeaders($headers);
     }
 
     protected function request()
@@ -55,12 +62,18 @@ class Prepr
         if ($this->method == 'get' && $this->cache) {
 
             $cacheHash = md5($this->url . $this->authorization . $this->userId);
-            if (Cache::has($cacheHash)) {
 
-                $data = Cache::get($cacheHash);
+            $explode = explode( '/',$this->path);
 
-                $this->request = data_get($data, 'request');
-                $this->response = data_get($data, 'response');
+            $cacheData = Cache::tags([
+                $this->cacheTag,
+                data_get($explode,0)
+            ])->get($cacheHash);
+
+            if ($cacheData) {
+
+                $this->request = data_get($cacheData, 'request');
+                $this->response = data_get($cacheData, 'response');
 
                 return $this;
             }
@@ -90,20 +103,49 @@ class Prepr
         }
         //End fix for laravel
 
+        $this->removeCache();
+
         $this->request = $this->client->{$this->method}($this->url, $data);
 
         $this->rawResponse = $this->request->body();
         $this->response = json_decode($this->rawResponse, true);
 
-        if ($this->cache) {
+        //Cache::tags('authors')->flush();
+
+        if ($this->method == 'get' && $this->cache) {
             $data = [
                 'request' => $this->request,
                 'response' => $this->response,
             ];
-            Cache::put($cacheHash, $data, $this->cacheTime);
+
+            $explode = explode( '/',$this->path);
+
+            Cache::tags([
+                $this->cacheTag,
+                data_get($explode,0)
+            ])->put($cacheHash, $data, $this->cacheTime);
+
+//            Cache::put($cacheHash, $data, $this->cacheTime);
         }
 
         return $this;
+    }
+
+    public function removeCache()
+    {
+        if(in_array($this->method, [
+            'post',
+            'put',
+            'delete',
+        ])) {
+
+            $explode = explode($this->path,'/');
+
+            Cache::tags([
+                $this->cacheTag,
+                data_get($explode,0)
+            ])->flush();
+        }
     }
 
     public function authorization(string $authorization)
@@ -116,6 +158,13 @@ class Prepr
     public function url(string $url)
     {
         $this->baseUrl = $url;
+
+        return $this;
+    }
+
+    public function headers(array $headers)
+    {
+        $this->headers = $headers;
 
         return $this;
     }
@@ -146,6 +195,13 @@ class Prepr
         $this->method = 'delete';
 
         return $this->request();
+    }
+
+    public function cached()
+    {
+        $this->cache = true;
+
+        return $this;
     }
 
     public function path(string $path = null, array $array = [])
