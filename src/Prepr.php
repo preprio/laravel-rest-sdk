@@ -281,17 +281,19 @@ class Prepr
         $perPage = 100;
         $page = 0;
         $queryLimit = data_get($this->query, 'limit');
-
+        $queryOffset = data_get($this->query, 'offset');
+        
         $arrayItems = [];
 
         while(true) {
-
-            $queryOffset = data_get($this->query, 'offset');
 
             $this->query = array_merge($this->query,[
                 'limit' => $perPage,
                 'offset' => ($queryOffset ? $queryOffset + ($page*$perPage) : $page*$perPage)
             ]);
+            
+            //ResetOffsetAftherUse
+            $queryOffset = null;
 
             $result = $this->get();
             if($result->getStatusCode() == 200) {
