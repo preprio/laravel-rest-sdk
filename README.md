@@ -180,7 +180,7 @@ if($apiRequest->getStatusCode() == 200) {
 }
 ```
 
-# Create, Update & Destroy
+## Create, Update & Destroy
 
 ### Post
 
