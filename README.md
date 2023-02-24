@@ -4,9 +4,9 @@ This Laravel package is a provider for the Prepr API.
 
 ## Basics
 
-The SDK on [GitHub](https://github.com/preprio/laravel-sdk)  
-Compatible with Laravel `v5x`, `v6x`, `v7x`, `v8x`, `v9x`.
-Requires `GuzzleHttp 7.3.X`.
+- The SDK on [GitHub](https://github.com/preprio/laravel-sdk)  
+- Compatible with Laravel `v5x`, `v6x`, `v7x`, `v8x`, `v9x`.
+- Requires `GuzzleHttp 7.3.X`.
 
 ## Installation
 
