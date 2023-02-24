@@ -5,13 +5,13 @@ This Laravel package is a provider for the Prepr API.
 ## Basics
 The SDK on [GitHub](https://github.com/preprio/laravel-sdk)  
 Compatible with Laravel `v5x`, `v6x`, `v7x`, `v8x`  
-Requires `GuzzleHttp 7.0.X`, `Murmurhash 2.0.X`
+Requires `GuzzleHttp 7.0.X`.
 
 ## Installation
 
 You can install the Provider as a composer package.
 
-For Laravel v9x
+For Laravel v9x (requires PHP ^7.4)
 
 ```bash
 composer require preprio/laravel-sdk
@@ -53,8 +53,29 @@ PREPR_CACHE=true
 PREPR_CACHE_TIME=1800
 ```
 
+# GraphQL: Making your first request
 
-## Making your first request
+```php
+$apiRequest = (new Prepr)
+    ->graphQL('{
+    
+    Posts {
+        items {
+            _id
+            _slug
+            title       
+        }
+    }
+}');
+
+if($apiRequest->getStatusCode() == 200) {
+    dump($apiRequest->getResponse());
+}
+```
+
+Check out the [GraphQL docs](https://docs.prepr.io/reference/graphql/v1/overview) on how to query the API.
+
+## REST: Making your first request
 
 Let's start with getting all content items from your Prepr Environment.
 
@@ -234,22 +255,6 @@ $apiRequest = (new Prepr)
       'body' => 'Example',
     ])
     ->file($source, 'image.jpg');
-
-if($apiRequest->getStatusCode() == 200) {
-    dump($apiRequest->getResponse());
-}
-```
-
-# GraphQL
-
-```php
-$apiRequest = (new Prepr)
-    ->graphQL('{
-    ModelName(id:"xxx-xxx") {
-        _id
-        _slug
-    }
-}');
 
 if($apiRequest->getStatusCode() == 200) {
     dump($apiRequest->getResponse());
