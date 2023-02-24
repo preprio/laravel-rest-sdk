@@ -7,7 +7,6 @@ use Cache;
 use GuzzleHttp\Psr7\LimitStream;
 use GuzzleHttp\Psr7\Utils;
 use Illuminate\Support\Facades\Http;
-use lastguest\Murmur;
 use Session;
 
 class Prepr
@@ -340,18 +339,9 @@ class Prepr
         return $this;
     }
 
-    public function hashUserId(string $userId)
-    {
-        $hashValue = Murmur::hash3_int($userId, 1);
-        $ratio = $hashValue / pow(2, 32);
-
-        return intval($ratio * 10000);
-    }
-
     public function userId(string $userId): self
     {
-        $this->userId = $this->hashUserId($userId);
-
+        $this->userId = $userId;
         return $this;
     }
 
