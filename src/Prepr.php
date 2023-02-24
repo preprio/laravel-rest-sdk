@@ -12,23 +12,30 @@ use Illuminate\Support\Facades\Http;
 
 class Prepr
 {
-    protected $baseUrl;
-    protected $url;
-    protected $path;
-    protected $query = [];
-    protected $method;
-    protected $params;
-    protected $response;
-    protected $rawResponse;
-    protected $request;
-    protected $authorization;
+    // Request
+    protected Illuminate\Support\Facades\Http $client;
+    protected string $baseUrl;
+    protected string $authorization;
+    protected string $url;
+    protected string $path;
+    protected string $method;
+    protected array|null $query = [];
+    protected array|null $params;
+    
+    // Settings
     protected $cache;
     protected $cacheTime;
-    protected $statusCode;
-    protected $userId;
+    
+    // Reponse
+    protected $response;
+    protected $rawResponse;
+    protected $request;    
+    protected int $statusCode;
+    
+    protected string $userId;
     protected $attach;
 
-    private $chunkSize = 26214400;
+    private int $chunkSize = 26214400;
 
     public function __construct()
     {
@@ -51,6 +58,7 @@ class Prepr
     {
         $this->url = $this->baseUrl . $this->path . ($this->query ? '?' . http_build_query($this->query) : '');
 
+        // Use Laravel Cache if this is requested.
         $cacheHash = null;
         if ($this->method == 'get' && $this->cache) {
 
@@ -66,20 +74,22 @@ class Prepr
             }
         }
 
+        // Get HTTP Client.
         $this->client = $this->client();
 
         if($this->attach) {
 
-            //Fix for laravel bug https://github.com/laravel/framework/issues/43710
+            // Fix for Laravel bug https://github.com/laravel/framework/issues/43710
             data_set($this->params, data_get($this->attach,'name'), data_get($this->attach,'contents'));
-            //End fix for laravel
+            // End fix for Laravel
 
-            //$this->client->attach(data_get($this->attach,'name'), data_get($this->attach,'contents'), data_get($this->attach,'filename'));
+            // $this->client->attach(data_get($this->attach,'name'), data_get($this->attach,'contents'), data_get($this->attach,'filename'));
         }
 
+        // Set params as request body.
         $data = $this->params;
 
-        //Fix for laravel bug https://github.com/laravel/framework/issues/43710
+        // Fix for Laravel bug https://github.com/laravel/framework/issues/43710
         if ($this->method == 'post') {
 
             $this->client->asMultipart();
@@ -88,32 +98,34 @@ class Prepr
                 $data = $this->nestedArrayToMultipart($this->params);
             }
         }
-        //End fix for laravel
+        // End fix for Laravel
 
         $this->request = $this->client->{$this->method}($this->url, $data);
 
         $this->rawResponse = $this->request->body();
         $this->response = json_decode($this->rawResponse, true);
 
+        // If caching is enabled, save it to the cache.
         if ($this->cache) {
+            
             $data = [
                 'request' => $this->request,
                 'response' => $this->response,
             ];
+            
             Cache::put($cacheHash, $data, $this->cacheTime);
         }
 
         return $this;
     }
 
-    public function authorization(string $authorization)
+    public function authorization(string $authorization) : self
     {
         $this->authorization = $authorization;
-
         return $this;
     }
 
-    public function url(string $url)
+    public function url(string $url) : self
     {
         $this->baseUrl = $url;
 
@@ -123,28 +135,24 @@ class Prepr
     public function get()
     {
         $this->method = 'get';
-
         return $this->request();
     }
 
     public function post()
     {
         $this->method = 'post';
-
         return $this->request();
     }
 
     public function put()
     {
         $this->method = 'put';
-
         return $this->request();
     }
 
     public function delete()
     {
         $this->method = 'delete';
-
         return $this->request();
     }
 
@@ -159,24 +167,21 @@ class Prepr
         return $this;
     }
 
-    public function method(string $method = null)
+    public function method(string $method = null) : self
     {
         $this->method = $method;
-
         return $this;
     }
 
-    public function query(array $array)
+    public function query(array $array) : self
     {
         $this->query = $array;
-
         return $this;
     }
 
-    public function params(array $array)
+    public function params(array $array) : self
     {
         $this->params = $array;
-
         return $this;
     }
 
@@ -199,7 +204,7 @@ class Prepr
         return $this->rawResponse;
     }
 
-    public function getStatusCode()
+    public function getStatusCode() : int
     {
         if($this->statusCode) {
             return $this->statusCode;
@@ -223,7 +228,6 @@ class Prepr
             ];
 
             return $this->post();
-
         }
     }
 
@@ -272,13 +276,15 @@ class Prepr
         ];
 
         $this->post();
-
         return $this;
     }
 
     public function autoPaging()
     {
+        // Set number of items per page.
         $perPage = 100;
+        
+        // Start with page 0.
         $page = 0;
         $queryLimit = data_get($this->query, 'limit');
         $queryOffset = data_get($this->query, 'offset');
@@ -292,7 +298,7 @@ class Prepr
                 'offset' => ($queryOffset ? $queryOffset + ($page*$perPage) : $page*$perPage)
             ]);
             
-            //ResetOffsetAftherUse
+            // Reset offset after use.
             $queryOffset = null;
 
             $result = $this->get();
@@ -328,6 +334,7 @@ class Prepr
             'items' => $arrayItems,
             'total' => count($arrayItems)
         ];
+        
         $this->statusCode = 200;
 
         return $this;
@@ -340,14 +347,13 @@ class Prepr
         return intval($ratio*10000);
     }
 
-    public function userId(string $userId)
+    public function userId(string $userId) : self
     {
         $this->userId = $this->hashUserId($userId);
-
         return $this;
     }
 
-    public function nestedArrayToMultipart(array $array)
+    public function nestedArrayToMultipart(array $array) : array
     {
         $flatten = function ($array, $original_key = '') use (&$flatten) {
             $output = [];
