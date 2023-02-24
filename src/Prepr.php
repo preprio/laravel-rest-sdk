@@ -2,7 +2,6 @@
 
 namespace Preprio;
 
-use Artisan;
 use Cache;
 use GuzzleHttp\Psr7\LimitStream;
 use GuzzleHttp\Psr7\Utils;
@@ -388,6 +387,6 @@ class Prepr
 
     public function clearCache()
     {
-        return Artisan::call('cache:clear');
+        return Cache::flush();
     }
 }
