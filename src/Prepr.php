@@ -31,7 +31,7 @@ class Prepr
     protected $request;
     protected int $statusCode;
 
-    protected string $userId;
+    protected string $customerId;
     protected $attach;
 
     private int $chunkSize = 26214400;
@@ -49,7 +49,7 @@ class Prepr
         return Http::acceptJson()
             ->withToken($this->authorization)
             ->withHeaders(array_merge(config('prepr.headers'), [
-                'Prepr-ABTesting' => $this->userId,
+                'Prepr-Customer-Id' => $this->customerId,
             ]));
     }
 
@@ -60,7 +60,7 @@ class Prepr
         // Use Laravel Cache if this is requested.
         $cacheHash = null;
         if ($this->method == 'get' && $this->cache) {
-            $cacheHash = md5($this->url.$this->authorization.$this->userId);
+            $cacheHash = md5($this->url.$this->authorization.$this->customerId);
             if (Cache::has($cacheHash)) {
                 $data = Cache::get($cacheHash);
 
@@ -339,11 +339,17 @@ class Prepr
         return $this;
     }
 
-    public function userId(string $userId): self
+    public function userId(string $customerId): self
     {
-        $this->userId = $userId;
+        $this->customerId = $customerId;
         return $this;
     }
+    
+    public function customerId(string $customerId): self
+    {
+        $this->customerId = $customerId;
+        return $this;
+    }    
 
     public function nestedArrayToMultipart(array $array): array
     {
