@@ -3,15 +3,16 @@
 This Laravel package is a provider for the Prepr API.
 
 ## Basics
+
 The SDK on [GitHub](https://github.com/preprio/laravel-sdk)  
-Compatible with Laravel `v5x`, `v6x`, `v7x`, `v8x`  
-Requires `GuzzleHttp 7.0.X`.
+Compatible with Laravel `v5x`, `v6x`, `v7x`, `v8x`, `v9x`.
+Requires `GuzzleHttp 7.3.X`.
 
 ## Installation
 
 You can install the Provider as a composer package.
 
-For Laravel v9x (requires PHP ^7.4)
+For Laravel v9x
 
 ```bash
 composer require preprio/laravel-sdk
@@ -30,6 +31,7 @@ composer require preprio/laravel-sdk:"1.1"
 ```
 
 ### Publish config
+
 Publish `prepr.php` config
 ```
 php artisan vendor:publish --provider="Preprio\PreprServiceProvider"
