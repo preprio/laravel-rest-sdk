@@ -18,8 +18,8 @@ class Prepr
     protected string $path;
     protected string $method;
     protected Response $request;
-    protected mixed $query = [];
-    protected mixed $params = [];
+    protected mixed $query = null;
+    protected mixed $params = null;
     protected null|array $attach = null;
 
     // Settings
