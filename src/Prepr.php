@@ -45,11 +45,17 @@ class Prepr
 
     protected function client()
     {
+        $headers = config('prepr.headers');
+
+        if($this->customerId) {
+            $headers = array_merge(config('prepr.headers'), [
+                'Prepr-Customer-Id' => $this->customerId,
+            ]);
+        }
+
         return Http::acceptJson()
             ->withToken($this->authorization)
-            ->withHeaders(array_merge(config('prepr.headers'), [
-                'Prepr-Customer-Id' => $this->customerId,
-            ]));
+            ->withHeaders($headers);
     }
 
     protected function request()
