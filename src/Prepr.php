@@ -27,8 +27,8 @@ class Prepr
     protected int $cacheTime;
     protected int $chunkSize = 26214400;
 
-    // Reponse
-    protected array $response;
+    // Response
+    protected array|null $response;
     protected string $rawResponse;
     protected int|null $statusCode = null;
 
