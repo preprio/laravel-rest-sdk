@@ -6,39 +6,39 @@ use Cache;
 use GuzzleHttp\Psr7\LimitStream;
 use GuzzleHttp\Psr7\Utils;
 use Illuminate\Support\Facades\Http;
-use Session;
+use Illuminate\Http\Client\Response;
 
 class Prepr
 {
     // Request
-    protected Illuminate\Support\Facades\Http $client;
+    protected object $client;
     protected string $baseUrl;
     protected string $authorization;
     protected string $url;
     protected string $path;
     protected string $method;
-    protected array|null $query = [];
-    protected array|null $params;
+    protected Response $request;
+    protected mixed $query = [];
+    protected mixed $params = [];
+    protected null|array $attach = null;
 
     // Settings
-    protected $cache;
-    protected $cacheTime;
+    protected bool $cache;
+    protected int $cacheTime;
+    protected int $chunkSize = 26214400;
 
     // Reponse
-    protected $response;
-    protected $rawResponse;
-    protected $request;
+    protected array $response;
+    protected string $rawResponse;
     protected int $statusCode;
 
-    protected string $customerId;
-    protected $attach;
-
-    private int $chunkSize = 26214400;
+    // Customer ID for personalization
+    protected mixed $customerId = null;
 
     public function __construct()
     {
-        $this->cache = config('prepr.cache');
-        $this->cacheTime = config('prepr.cache_time');
+        $this->cache = config('prepr.cache', false);
+        $this->cacheTime = config('prepr.cache_time', 3600);
         $this->baseUrl = config('prepr.url');
         $this->authorization = config('prepr.token');
     }
@@ -61,6 +61,7 @@ class Prepr
         if ($this->method == 'get' && $this->cache) {
             $cacheHash = md5($this->url.$this->authorization.$this->customerId);
             if (Cache::has($cacheHash)) {
+
                 $data = Cache::get($cacheHash);
 
                 $this->request = data_get($data, 'request');
@@ -102,6 +103,7 @@ class Prepr
 
         // If caching is enabled, save it to the cache.
         if ($this->cache) {
+
             $data = [
                 'request' => $this->request,
                 'response' => $this->response,
@@ -343,12 +345,12 @@ class Prepr
         $this->customerId = $customerId;
         return $this;
     }
-    
+
     public function customerId(string $customerId): self
     {
         $this->customerId = $customerId;
         return $this;
-    }    
+    }
 
     public function nestedArrayToMultipart(array $array): array
     {

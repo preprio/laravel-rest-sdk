@@ -4,7 +4,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | API Base Url
+    | API URL to the Prepr API
     |--------------------------------------------------------------------------
     |
     | The base url of the API to consume.
@@ -15,10 +15,10 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Token
+    | Access Token (for GraphQL requests this can be left empty)
     |--------------------------------------------------------------------------
     |
-    | The token of the API to consume.
+    | The access token of the API to consume.
     |
     */
 
@@ -26,10 +26,13 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Cache
+    | Cache Switch
     |--------------------------------------------------------------------------
     |
-    | Turn the cache on or off.
+    | This option may be used to disable caching
+    | of individual requests, which simply provides a single
+    | and convenient way to enable or disable the use of
+    | Laravel build-in caching.
     |
     */
 
@@ -40,11 +43,11 @@ return [
     | Cache Time in seconds
     |--------------------------------------------------------------------------
     |
-    | Default 5 minutes (300 seconds)
+    | Default 60 minutes (3600 seconds).
     |
     */
 
-    'cache_time' => env('PREPR_CACHE_TIME', 300),
+    'cache_time' => env('PREPR_CACHE_TIME', 3600),
 
     /*
     |--------------------------------------------------------------------------
@@ -56,7 +59,6 @@ return [
     */
 
     'headers' => [
-
+        //
     ],
-
 ];
