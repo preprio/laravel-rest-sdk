@@ -5,8 +5,8 @@ namespace Preprio;
 use Cache;
 use GuzzleHttp\Psr7\LimitStream;
 use GuzzleHttp\Psr7\Utils;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Http;
 
 class Prepr
 {
@@ -61,7 +61,6 @@ class Prepr
         if ($this->method == 'get' && $this->cache) {
             $cacheHash = md5($this->url.$this->authorization.$this->customerId);
             if (Cache::has($cacheHash)) {
-
                 $data = Cache::get($cacheHash);
 
                 $this->request = data_get($data, 'request');
@@ -103,7 +102,6 @@ class Prepr
 
         // If caching is enabled, save it to the cache.
         if ($this->cache) {
-
             $data = [
                 'request' => $this->request,
                 'response' => $this->response,
@@ -343,12 +341,14 @@ class Prepr
     public function userId(string $customerId): self
     {
         $this->customerId = $customerId;
+
         return $this;
     }
 
     public function customerId(string $customerId): self
     {
         $this->customerId = $customerId;
+
         return $this;
     }
 
