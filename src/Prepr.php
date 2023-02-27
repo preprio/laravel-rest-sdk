@@ -30,7 +30,7 @@ class Prepr
     // Reponse
     protected array $response;
     protected string $rawResponse;
-    protected int $statusCode;
+    protected int|null $statusCode = null;
 
     // Customer ID for personalization
     protected mixed $customerId = null;
