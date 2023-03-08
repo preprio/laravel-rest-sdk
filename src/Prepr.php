@@ -13,7 +13,7 @@ class Prepr
     // Request
     protected object $client;
     protected string $baseUrl;
-    protected string $authorization;
+    protected null|string $authorization;
     protected string $url;
     protected string $path;
     protected string $method;
