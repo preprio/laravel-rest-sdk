@@ -47,7 +47,7 @@ class Prepr
     {
         $headers = config('prepr.headers');
 
-        if($this->customerId) {
+        if ($this->customerId) {
             $headers = array_merge(config('prepr.headers'), [
                 'Prepr-Customer-Id' => $this->customerId,
             ]);
@@ -80,7 +80,6 @@ class Prepr
         $this->client = $this->client();
 
         if ($this->attach) {
-
             // Fix for Laravel bug https://github.com/laravel/framework/issues/43710
             data_set($this->params, data_get($this->attach, 'name'), data_get($this->attach, 'contents'));
             // End fix for Laravel
