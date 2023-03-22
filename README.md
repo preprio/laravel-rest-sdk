@@ -14,20 +14,20 @@ You can install the Provider as a composer package.
 
 For Laravel v10x
 
-```bash (requires PHP ^8.x)
-composer require preprio/laravel-sdk
+```bash
+composer require preprio/laravel-sdk:"^3.0"
 ```
 
 For Laravel v9x
 
 ```bash
-composer require preprio/laravel-sdk 
+composer require preprio/laravel-sdk:"^2.0"
 ```
 
 For Laravel v8x
 
 ```bash
-composer require preprio/laravel-sdk:"1.3"
+composer require preprio/laravel-sdk:"^1.3"
 ```
 
 Other versions
