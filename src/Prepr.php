@@ -19,6 +19,7 @@ class Prepr
     protected string $method;
     protected Response $request;
     protected mixed $query = null;
+    protected array $headers = [];
     protected mixed $params = null;
     protected null|array $attach = null;
 
@@ -45,12 +46,10 @@ class Prepr
 
     protected function client()
     {
-        $headers = config('prepr.headers');
+        $headers = array_merge(config('prepr.headers'), $this->headers);
 
         if ($this->customerId) {
-            $headers = array_merge(config('prepr.headers'), [
-                'Prepr-Customer-Id' => $this->customerId,
-            ]);
+            $headers['Prepr-Customer-Id'] = $this->customerId;
         }
 
         return Http::acceptJson()
@@ -128,6 +127,13 @@ class Prepr
     public function url(string $url): self
     {
         $this->baseUrl = $url;
+
+        return $this;
+    }
+
+    public function headers(array $headers): self
+    {
+        $this->headers = $headers;
 
         return $this;
     }
