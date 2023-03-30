@@ -17,7 +17,10 @@
     "autoload": {
         "psr-4": {
             "Preprio\\": "src/"
-        }
+        },
+        "files": [
+            "helpers.php"
+        ]
     },
     "extra": {
         "laravel": {
