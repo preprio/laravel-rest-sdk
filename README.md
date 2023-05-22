@@ -1,6 +1,6 @@
 # Getting started with Laravel
 
-This Laravel package is a provider for the Prepr API.
+This Laravel package is a provider for the Prepr REST API.
 
 ## Basics
 
@@ -61,29 +61,7 @@ PREPR_CACHE=true
 PREPR_CACHE_TIME=1800
 ```
 
-# GraphQL: Making your first request
-
-```php
-$apiRequest = (new Prepr)
-    ->graphQL('{
-    
-    Posts {
-        items {
-            _id
-            _slug
-            title       
-        }
-    }
-}');
-
-if($apiRequest->getStatusCode() == 200) {
-    dump($apiRequest->getResponse());
-}
-```
-
-Check out the [GraphQL docs](https://docs.prepr.io/reference/graphql/v1/overview) on how to query the API.
-
-## REST: Making your first request
+## Making your first request
 
 Let's start with getting all content items from your Prepr Environment.
 
@@ -131,41 +109,6 @@ if($apiRequest->getStatusCode() == 200) {
     print_r($apiRequest->getResponse());
 }
 ```
-
-## A/B testing
-
-To enable A/B testing you can pass a User ID to provide a consistent result.
-The A/B testing feature requires the use of the cached CDN API.
-
-To switch off A/B testing, pass NULL to the UserId param.
-
-```php
-$apiRequest = new Prepr( '{{YourCustomUserId}}');
-```
-
-or per request
-
-```php
-$apiRequest
-    ->path('publications/{id}',[
-        'id' => 1
-    ]),
-    ->query([
-        'fields' => 'example'
-    ])
-    ->userId(
-        session()->getId() // For Example you can use Laravel's Session ID.
-    )
-    ->get();
-
-if($apiRequest->getStatusCode() == 200) {
-
-    print_r($apiRequest->getResponse());
-}
-```
-
-For more information check the [A/B testing documentation](https://docs.prepr.io/docs/digging-deeper/v1/ab-testing).
-
 
 ### Override the AccessToken in a request
 
