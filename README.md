@@ -15,7 +15,7 @@ You can install the Provider as a composer package.
 For Laravel v10x
 
 ```bash
-composer require preprio/laravel-rest-sdk:"^3.0"
+composer require preprio/laravel-rest-sdk:"^4.0"
 ```
 
 For Laravel v9x
