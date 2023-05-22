@@ -1,10 +1,10 @@
-# Getting started with Laravel
+# Laravel provider for the Prepr REST API
 
 This Laravel package is a provider for the Prepr REST API.
 
 ## Basics
 
-- The SDK on [GitHub](https://github.com/preprio/laravel-sdk)  
+- The SDK on [GitHub](https://github.com/preprio/laravel-rest-sdk)  
 - Compatible with Laravel `v5x`, `v6x`, `v7x`, `v8x`, `v9x`, `v10x`.
 - Requires `GuzzleHttp 7.3.X`, and for version 3.0 and above PHP 8.x is required.
 
@@ -15,25 +15,25 @@ You can install the Provider as a composer package.
 For Laravel v10x
 
 ```bash
-composer require preprio/laravel-sdk:"^3.0"
+composer require preprio/laravel-rest-sdk:"^3.0"
 ```
 
 For Laravel v9x
 
 ```bash
-composer require preprio/laravel-sdk:"^2.0"
+composer require preprio/laravel-rest-sdk:"^2.0"
 ```
 
 For Laravel v8x
 
 ```bash
-composer require preprio/laravel-sdk:"^1.3"
+composer require preprio/laravel-rest-sdk:"^1.3"
 ```
 
 Other versions
 
 ```bash
-composer require preprio/laravel-sdk:"1.1"
+composer require preprio/laravel-rest-sdk:"1.1"
 ```
 
 ### Publish config

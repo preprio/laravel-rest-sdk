@@ -1,7 +1,7 @@
 {
-    "name": "preprio/laravel-sdk",
-    "description": "Prepr API wrapper for Laravel",
-    "keywords": ["laravel", "prepr"],
+    "name": "preprio/laravel-rest-sdk",
+    "description": "Laravel SDK for the Prepr REST API.",
+    "keywords": ["laravel", "prepr", "rest"],
     "license": "MIT",
     "authors": [
         {

@@ -20,6 +20,7 @@ class Prepr
     protected Response $request;
     protected mixed $query = null;
     protected mixed $params = null;
+    protected array $headers = [];
     protected null|array $attach = null;
 
     // Settings
@@ -32,30 +33,19 @@ class Prepr
     protected string $rawResponse;
     protected int|null $statusCode = null;
 
-    // Customer ID for personalization
-    protected mixed $customerId = null;
-
     public function __construct()
     {
-        $this->cache = config('prepr.cache', false);
-        $this->cacheTime = config('prepr.cache_time', 3600);
+        $this->cache = config('prepr.cache');
+        $this->cacheTime = config('prepr.cache_time');
         $this->baseUrl = config('prepr.url');
         $this->authorization = config('prepr.token');
     }
 
     protected function client()
     {
-        $headers = config('prepr.headers');
-
-        if ($this->customerId) {
-            $headers = array_merge(config('prepr.headers'), [
-                'Prepr-Customer-Id' => $this->customerId,
-            ]);
-        }
-
         return Http::acceptJson()
             ->withToken($this->authorization)
-            ->withHeaders($headers);
+            ->withHeaders(array_merge(config('prepr.headers'), $this->headers));
     }
 
     protected function request()
@@ -65,8 +55,11 @@ class Prepr
         // Use Laravel Cache if this is requested.
         $cacheHash = null;
         if ($this->method == 'get' && $this->cache) {
-            $cacheHash = md5($this->url.$this->authorization.$this->customerId);
+
+            $cacheHash = md5($this->url.$this->authorization);
+
             if (Cache::has($cacheHash)) {
+
                 $data = Cache::get($cacheHash);
 
                 $this->request = data_get($data, 'request');
@@ -107,6 +100,7 @@ class Prepr
 
         // If caching is enabled, save it to the cache.
         if ($this->cache) {
+
             $data = [
                 'request' => $this->request,
                 'response' => $this->response,
@@ -160,7 +154,7 @@ class Prepr
         return $this->request();
     }
 
-    public function path(string $path = null, array $array = [])
+    public function path(string $path = null, array $array = []) : self
     {
         foreach ($array as $key => $value) {
             $path = str_replace('{'.$key.'}', $value, $path);
@@ -192,13 +186,11 @@ class Prepr
         return $this;
     }
 
-    public function graphQL(string $query, array $variables = [])
+    public function headers(array $headers): self
     {
-        $this->path = 'graphql';
-        $this->params['query'] = $query;
-        $this->params['variables'] = $variables;
+        $this->headers = $headers;
 
-        return $this->post();
+        return $this;
     }
 
     public function getResponse()
@@ -286,7 +278,7 @@ class Prepr
         return $this;
     }
 
-    public function autoPaging()
+    public function autoPaging() : self
     {
         // Set number of items per page.
         $perPage = 100;
@@ -339,20 +331,6 @@ class Prepr
         ];
 
         $this->statusCode = 200;
-
-        return $this;
-    }
-
-    public function userId(string $customerId): self
-    {
-        $this->customerId = $customerId;
-
-        return $this;
-    }
-
-    public function customerId(string $customerId): self
-    {
-        $this->customerId = $customerId;
 
         return $this;
     }
