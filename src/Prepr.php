@@ -55,11 +55,9 @@ class Prepr
         // Use Laravel Cache if this is requested.
         $cacheHash = null;
         if ($this->method == 'get' && $this->cache) {
-
             $cacheHash = md5($this->url.$this->authorization);
 
             if (Cache::has($cacheHash)) {
-
                 $data = Cache::get($cacheHash);
 
                 $this->request = data_get($data, 'request');
@@ -100,7 +98,6 @@ class Prepr
 
         // If caching is enabled, save it to the cache.
         if ($this->cache) {
-
             $data = [
                 'request' => $this->request,
                 'response' => $this->response,
@@ -154,7 +151,7 @@ class Prepr
         return $this->request();
     }
 
-    public function path(string $path = null, array $array = []) : self
+    public function path(string $path = null, array $array = []): self
     {
         foreach ($array as $key => $value) {
             $path = str_replace('{'.$key.'}', $value, $path);
@@ -278,7 +275,7 @@ class Prepr
         return $this;
     }
 
-    public function autoPaging() : self
+    public function autoPaging(): self
     {
         // Set number of items per page.
         $perPage = 100;
