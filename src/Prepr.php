@@ -13,6 +13,7 @@ class Prepr
     protected $baseUrl;
     protected $path;
     protected $query;
+    protected $headers = [];
     protected $rawQuery;
     protected $method;
     protected $params = [];
@@ -38,14 +39,19 @@ class Prepr
 
     protected function client()
     {
+        $headers = array_merge(config('prepr.headers'), $this->headers);
+
+        if($this->userId) {
+            $headers['Prepr-ABTesting'] = $this->userId;
+        }
+        
+        $headers['Accept'] = 'application/json';
+        $headers['Content-Type'] = 'application/json';
+        $headers['Authorization'] = $this->authorization;
+        
         return new Client([
             'http_errors' => false,
-            'headers' => array_merge(config('prepr.headers'), [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => $this->authorization,
-                'Prepr-ABTesting' => $this->userId
-            ])
+            'headers' => $headers
         ]);
     }
 
@@ -118,6 +124,13 @@ class Prepr
     public function url($url)
     {
         $this->baseUrl = $url;
+
+        return $this;
+    }
+    
+    public function headers(array $headers)
+    {
+        $this->headers = $headers;
 
         return $this;
     }
