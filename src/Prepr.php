@@ -77,20 +77,8 @@ class Prepr
         $this->client = $this->client();
 
         $data = [
-            'form_params' => $this->params,
+            'body' => json_encode($this->params),
         ];
-
-        if ($this->path === 'graphql') {
-            $data = [
-                'json' => [
-                    'query' => $this->params,
-                ],
-            ];
-        } else if ($this->method == 'post') {
-            $data = [
-                'multipart' => $this->nestedArrayToMultipart($this->params),
-            ];
-        }
 
         $this->request = $this->client->request($this->method, $url . $this->query, $data);
 
@@ -192,14 +180,6 @@ class Prepr
     public function params(array $array)
     {
         $this->params = $array;
-
-        return $this;
-    }
-
-    public function graphQL(string $query)
-    {
-        $this->path = 'graphql';
-        $this->params = $query;
 
         return $this;
     }
@@ -366,41 +346,6 @@ class Prepr
         $this->userId = $this->hashUserId($userId);
 
         return $this;
-    }
-
-    public function nestedArrayToMultipart($array)
-    {
-        $flatten = function ($array, $original_key = '') use (&$flatten) {
-            $output = [];
-            foreach ($array as $key => $value) {
-                $new_key = $original_key;
-                if (empty($original_key)) {
-                    $new_key .= $key;
-                } else {
-                    $new_key .= '[' . $key . ']';
-                }
-
-                if (is_array($value)) {
-                    $output = array_merge($output, $flatten($value, $new_key));
-                } else {
-                    $output[$new_key] = $value;
-                }
-            }
-
-            return $output;
-        };
-
-        $flat_array = $flatten($array);
-
-        $multipart = [];
-        foreach ($flat_array as $key => $value) {
-            $multipart[] = [
-                'name' => $key,
-                'contents' => $value,
-            ];
-        }
-
-        return $multipart;
     }
 
     public function clearCache()
