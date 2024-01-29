@@ -26,6 +26,7 @@ class Prepr
     protected bool $cache;
     protected int $cacheTime;
     protected int $chunkSize = 26214400;
+    protected int $timeout;
 
     // Response
     protected array|null $response;
@@ -41,6 +42,7 @@ class Prepr
         $this->cacheTime = config('prepr.cache_time', 3600);
         $this->baseUrl = config('prepr.url');
         $this->authorization = config('prepr.token');
+        $this->timeout = config('prepr.timeout', 30);
     }
 
     protected function client()
@@ -54,6 +56,7 @@ class Prepr
         }
 
         return Http::acceptJson()
+            ->timeout($this->timeout)
             ->withToken($this->authorization)
             ->withHeaders($headers);
     }
