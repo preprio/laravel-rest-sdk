@@ -8,14 +8,16 @@ return [
     |--------------------------------------------------------------------------
     |
     | The base url of the API to consume.
+    | If your intent is to write data to prepr, use the following url:
+    | https://api.eu1.prepr.io/
     |
     */
 
-    'url' => env('PREPR_URL'),
+    'url' => env('PREPR_URL', 'https://cdn.prepr.io/'),
 
     /*
     |--------------------------------------------------------------------------
-    | Access Token (for GraphQL requests this can be left empty)
+    | Access Token
     |--------------------------------------------------------------------------
     |
     | The access token of the API to consume.
@@ -75,7 +77,7 @@ return [
     | HTTP Headers
     |--------------------------------------------------------------------------
     |
-    | The HTTP headers to be send along in each call
+    | The HTTP headers to be sent along in each call
     |
     */
 
