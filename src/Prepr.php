@@ -59,6 +59,7 @@ class Prepr
 
         return Http::acceptJson()
             ->timeout($this->timeout)
+            ->connectTimeout($this->connectTimeout)
             ->withToken($this->authorization)
             ->withHeaders($headers);
     }
