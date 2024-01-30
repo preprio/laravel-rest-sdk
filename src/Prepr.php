@@ -27,6 +27,7 @@ class Prepr
     protected int $cacheTime;
     protected int $chunkSize = 26214400;
     protected int $timeout;
+    protected int $connectTimeout;
 
     // Response
     protected array|null $response;
@@ -43,6 +44,7 @@ class Prepr
         $this->baseUrl = config('prepr.url');
         $this->authorization = config('prepr.token');
         $this->timeout = config('prepr.timeout', 30);
+        $this->connectTimeout = config('prepr.connect_timeout', 10);
     }
 
     protected function client()
