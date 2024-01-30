@@ -61,6 +61,13 @@ PREPR_CACHE=true
 PREPR_CACHE_TIME=1800
 ```
 
+## Optional options
+
+```text
+PREPR_TIMEOUT=30
+PREPR_CONNECT_TIMEOUT=10
+```
+
 # GraphQL: Making your first request
 
 ```php
