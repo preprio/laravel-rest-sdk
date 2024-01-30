@@ -58,7 +58,7 @@ return [
     |
     */
 
-    'timeout' => env('TIMEOUT', 30),
+    'timeout' => env('PREPR_TIMEOUT', 30),
 
     /*
     |--------------------------------------------------------------------------
@@ -69,7 +69,7 @@ return [
     |
     */
 
-    'connect_timeout' => env('CONNECT_TIMEOUT', 10),
+    'connect_timeout' => env('PREPR_CONNECT_TIMEOUT', 10),
     /*
     |--------------------------------------------------------------------------
     | HTTP Headers
