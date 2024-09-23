@@ -260,7 +260,7 @@ class Prepr
 
             $stream = new LimitStream($original, $limit, $offset);
 
-            $this->path('assets/'.$assetId);
+            $this->path($this->path . '/'.$assetId);
 
             $this->params = [
                 'upload_phase' => 'transfer',
