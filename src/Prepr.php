@@ -247,14 +247,15 @@ class Prepr
 
         $assetId = data_get($start->getResponse(), 'id');
 
+        //Set the right url
+        $this->path($this->path . '/'.$assetId . '/multipart');
+        
         for ($i = 0; $i <= $chunks; $i++) {
             $offset = ($this->chunkSize * $i);
             $endOfFile = $i === $chunks;
             $limit = ($endOfFile ? ($fileSize - $offset) : $this->chunkSize);
 
             $stream = new LimitStream($original, $limit, $offset);
-
-            $this->path('assets/'.$assetId);
 
             $this->params = [
                 'upload_phase' => 'transfer',
