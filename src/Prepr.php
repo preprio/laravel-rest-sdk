@@ -196,10 +196,9 @@ class Prepr
         return $this;
     }
 
-    public function setCache(int $cacheTime): self
+    public function noCache(): self
     {
-        $this->cache = ($cacheTime > 0);
-        $this->cacheTime = $cacheTime;
+        $this->cache = false;
 
         return $this;
     }
