@@ -196,6 +196,14 @@ class Prepr
         return $this;
     }
 
+    public function setCache(int $cacheTime): self
+    {
+        $this->cache = ($cacheTime > 0);
+        $this->cacheTime = $cacheTime;
+
+        return $this;
+    }
+
     public function getResponse()
     {
         return $this->response;
