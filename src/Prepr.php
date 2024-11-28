@@ -308,7 +308,7 @@ class Prepr
             // Reset offset after use.
             $queryOffset = null;
             
-            $result = (new Prepr())
+            $result = (new self())
                 ->authorization($this->authorization)
                 ->path($this->path)
                 ->query($this->rawQuery)
