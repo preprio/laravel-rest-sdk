@@ -291,7 +291,7 @@ class Prepr
     {
         $this->method = 'get';
 
-        $perPage = 1000;
+        $perPage = 100;
         $page = 0;
         $queryLimit = data_get($this->rawQuery, 'limit');
         $queryOffset = data_get($this->rawQuery, 'offset');
