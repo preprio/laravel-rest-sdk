@@ -310,6 +310,7 @@ class Prepr
             
             $result = (new self())
                 ->authorization($this->authorization)
+                ->url($this->baseUrl)
                 ->path($this->path)
                 ->query($this->rawQuery)
                 ->get();
