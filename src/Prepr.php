@@ -26,6 +26,7 @@ class Prepr
     protected $file = null;
     protected $statusCode;
     protected $userId;
+    protected $asJson = false;
 
     private $chunkSize = 26214400;
 
@@ -76,14 +77,23 @@ class Prepr
 
         $this->client = $this->client();
 
-        $data = [
-            'form_params' => $this->params,
-        ];
+        if($this->asJson) {
 
-        if ($this->method == 'post') {
             $data = [
-                'multipart' => $this->nestedArrayToMultipart($this->params),
+                'json' => $this->params,
             ];
+
+        } else {
+
+            $data = [
+                'form_params' => $this->params,
+            ];
+
+            if ($this->method == 'post') {
+                $data = [
+                    'multipart' => $this->nestedArrayToMultipart($this->params),
+                ];
+            }
         }
 
         $this->request = $this->client->request($this->method, $url . $this->query, $data);
@@ -118,6 +128,13 @@ class Prepr
     public function url($url)
     {
         $this->baseUrl = $url;
+
+        return $this;
+    }
+
+    public function asJson()
+    {
+        $this->asJson = true;
 
         return $this;
     }
