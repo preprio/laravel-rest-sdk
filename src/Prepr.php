@@ -129,35 +129,35 @@ class Prepr
         return $this;
     }
 
-    public function get()
+    public function get(): self
     {
         $this->method = 'get';
 
         return $this->request();
     }
 
-    public function post()
+    public function post(): self
     {
         $this->method = 'post';
 
         return $this->request();
     }
 
-    public function put()
+    public function put(): self
     {
         $this->method = 'put';
 
         return $this->request();
     }
 
-    public function delete()
+    public function delete(): self
     {
         $this->method = 'delete';
 
         return $this->request();
     }
 
-    public function path(string $path = null, array $array = []): self
+    public function path(?string $path = null, array $array = []): self
     {
         foreach ($array as $key => $value) {
             $path = str_replace('{'.$key.'}', $value, $path);
@@ -168,7 +168,7 @@ class Prepr
         return $this;
     }
 
-    public function method(string $method = null): self
+    public function method(?string $method = null): self
     {
         $this->method = $method;
 
@@ -215,13 +215,13 @@ class Prepr
         return $this->request->getStatusCode();
     }
 
-    public function file($file, string $filename = null)
+    public function file($file, ?string $filename = null)
     {
         $original = Utils::streamFor($file);
         $fileSize = $original->getSize();
 
         if ($fileSize > $this->chunkSize) {
-            return $this->chunkUpload($original, $fileSize);
+            return $this->chunkUpload($original, $fileSize, $filename);
         } else {
             $this->attach = [
                 'name' => 'source',
@@ -233,7 +233,7 @@ class Prepr
         }
     }
 
-    private function chunkUpload($original, int $fileSize, string $filename = null)
+    private function chunkUpload($original, int $fileSize, ?string $filename = null)
     {
         $chunks = (int) floor($fileSize / $this->chunkSize);
 
@@ -248,8 +248,8 @@ class Prepr
         $assetId = data_get($start->getResponse(), 'id');
 
         //Set the right url
-        $this->path($this->path . '/'.$assetId . '/multipart');
-        
+        $this->path($this->path.'/'.$assetId.'/multipart');
+
         for ($i = 0; $i <= $chunks; $i++) {
             $offset = ($this->chunkSize * $i);
             $endOfFile = $i === $chunks;
