@@ -22,6 +22,7 @@ class Prepr
     protected mixed $params = null;
     protected array $headers = [];
     protected null|array $attach = null;
+    protected bool $asJson = false;
 
     // Settings
     protected bool $cache;
@@ -87,15 +88,22 @@ class Prepr
         // Set params as request body.
         $data = $this->params;
 
-        // Fix for Laravel bug https://github.com/laravel/framework/issues/43710
-        if ($this->method == 'post') {
-            $this->client->asMultipart();
+        if ($this->asJson || $this->method == 'get') {
+            $this->client->asJson();
+        } else {
+            if ($this->method == 'post') {
+                
+                // Fix for Laravel bug https://github.com/laravel/framework/issues/43710
+                $this->client->asMultipart();
 
-            if ($this->params) {
-                $data = $this->nestedArrayToMultipart($this->params);
+                if ($this->params) {
+                    $data = $this->nestedArrayToMultipart($this->params);
+                }
+                // End fix for Laravel
+            } else {
+                $this->client->asForm();
             }
         }
-        // End fix for Laravel
 
         $this->request = $this->client->{$this->method}($this->url, $data);
 
@@ -104,12 +112,11 @@ class Prepr
 
         // If caching is enabled, save it to the cache.
         if ($this->cache) {
-            $data = [
+
+            Cache::put($cacheHash, [
                 'request' => $this->request,
                 'response' => $this->response,
-            ];
-
-            Cache::put($cacheHash, $data, $this->cacheTime);
+            ], $this->cacheTime);
         }
 
         return $this;
@@ -125,6 +132,13 @@ class Prepr
     public function url(string $url): self
     {
         $this->baseUrl = $url;
+
+        return $this;
+    }
+
+    public function asJson(): self
+    {
+        $this->asJson = true;
 
         return $this;
     }
