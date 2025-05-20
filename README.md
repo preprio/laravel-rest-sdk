@@ -168,6 +168,21 @@ if($apiRequest->getStatusCode() == 200) {
 }
 ```
 
+### Patch (Update)
+
+```php
+$apiRequest = (new Prepr)
+    ->path('publications')
+    ->params([
+        'body' => 'Example'
+    ])
+    ->patch();
+
+if($apiRequest->getStatusCode() == 200) {
+    dump($apiRequest->getResponse());
+}
+```
+
 ### Delete
 
 ```php
