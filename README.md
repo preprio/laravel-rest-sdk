@@ -12,7 +12,7 @@ This Laravel package is a provider for the Prepr REST API.
 
 You can install the Provider as a composer package.
 
-For Laravel v10x
+For Laravel v10x, v11x and Laravel v12x
 
 ```bash
 composer require preprio/laravel-rest-sdk:"^4.0"
@@ -162,6 +162,21 @@ $apiRequest = (new Prepr)
         'body' => 'Example'
     ])
     ->put();
+
+if($apiRequest->getStatusCode() == 200) {
+    dump($apiRequest->getResponse());
+}
+```
+
+### Patch (Update)
+
+```php
+$apiRequest = (new Prepr)
+    ->path('publications')
+    ->params([
+        'body' => 'Example'
+    ])
+    ->patch();
 
 if($apiRequest->getStatusCode() == 200) {
     dump($apiRequest->getResponse());

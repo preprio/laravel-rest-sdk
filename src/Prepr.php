@@ -164,6 +164,13 @@ class Prepr
         return $this->request();
     }
 
+    public function patch(): self
+    {
+        $this->method = 'patch';
+
+        return $this->request();
+    }
+
     public function delete(): self
     {
         $this->method = 'delete';
