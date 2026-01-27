@@ -181,11 +181,26 @@ class Prepr
     public function path(?string $path = null, array $array = []): self
     {
         foreach ($array as $key => $value) {
-            $path = str_replace('{'.$key.'}', $value, $path);
+            
+            if (is_null($value)) {
+               
+                $caller = collect(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1))->first();
+            
+                \Illuminate\Support\Facades\Log::warning("Prepr SDK: Missing value for placeholder '{".$key."}'", [
+                    'full_endpoint' => $this->baseUrl . $path,
+                    'placeholder' => $key,
+                    'called_in' => ($caller['file'] ?? 'unknown') . ' on line ' . ($caller['line'] ?? 'unknown'),
+                    'provided_values' => $array
+                ]);
+                
+                $value = '';
+            }
+    
+            $path = str_replace('{'.$key.'}', (string) $value, $path);
         }
-
+    
         $this->path = $path;
-
+    
         return $this;
     }
 
