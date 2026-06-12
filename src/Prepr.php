@@ -180,8 +180,46 @@ class Prepr
 
     public function path(?string $path = null, array $array = []): self
     {
-        foreach ($array as $key => $value) {
-            $path = str_replace('{'.$key.'}', $value, $path);
+        $endpoint = $path ?? '';
+        $removeMarker = "\0";
+
+        $path = preg_replace_callback(
+            '/\{([a-zA-Z0-9_]+)(\?)?\}/',
+            function (array $matches) use ($array, $endpoint, $removeMarker) {
+                $key = $matches[1];
+                $optional = ($matches[2] ?? '') === '?';
+
+                if (! array_key_exists($key, $array) || $array[$key] === null) {
+                    if ($optional) {
+                        return $removeMarker;
+                    }
+
+                    $caller = collect(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2))->last();
+
+                    \Illuminate\Support\Facades\Log::warning(
+                        "Prepr SDK: Missing value for required path placeholder '{".$key."}'",
+                        [
+                            'full_endpoint' => $this->baseUrl.$endpoint,
+                            'placeholder' => $key,
+                            'called_in' => ($caller['file'] ?? 'unknown').' on line '.($caller['line'] ?? 'unknown'),
+                            'provided_values' => $array,
+                        ]
+                    );
+
+                    return '';
+                }
+
+                return (string) $array[$key];
+            },
+            $endpoint
+        );
+
+        $path = preg_replace('#/'.$removeMarker.'#', '', $path);
+        $path = preg_replace('#^'.$removeMarker.'/+|'.$removeMarker.'$#', '', $path);
+        $path = preg_replace('#/+#', '/', $path);
+
+        if ($path !== '/' && str_ends_with($path, '/')) {
+            $path = rtrim($path, '/');
         }
 
         $this->path = $path;
