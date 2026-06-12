@@ -117,6 +117,20 @@ if($apiRequest->getStatusCode() == 200) {
 }
 ```
 
+### Optional path parameters
+
+Use `{param?}` for optional route segments (similar to Laravel route syntax). When the value is `null` or the key is missing, the segment is omitted from the path. Required placeholders (`{param}`) log a warning when the value is missing or `null`, and the path is normalized (no trailing slashes).
+
+An empty string (`''`) is treated as a provided value, not as missing.
+
+```php
+$apiRequest = (new Prepr)
+    ->path('tags/{id?}', [
+        'id' => $id,
+    ])
+    ->get();
+```
+
 ### Override the AccessToken in a request
 
 The authorization can also be set for one specific request `->url('url')->authorization('token')`.
