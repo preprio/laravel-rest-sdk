@@ -134,6 +134,36 @@ $apiRequest = (new Prepr)
     ->get();
 ```
 
+### Timeouts and connection errors
+
+Connection errors are caught by the SDK. You can handle them like other API errors with `getStatusCode()` and `getResponse()`, without `try/catch`.
+
+A timeout returns status `504`:
+
+```json
+{
+    "message": "connection.error.timeout",
+    "errors": {
+        "connection": [
+            "connection.error.timeout"
+        ]
+    }
+}
+```
+
+Other connection problems (DNS, connection refused) return status `502`:
+
+```json
+{
+    "message": "connection.error.failed",
+    "errors": {
+        "connection": [
+            "connection.error.failed"
+        ]
+    }
+}
+```
+
 ## Autopaging
 
 ```php
