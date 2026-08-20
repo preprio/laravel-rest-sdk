@@ -5,6 +5,7 @@ namespace Preprio;
 use Cache;
 use GuzzleHttp\Psr7\LimitStream;
 use GuzzleHttp\Psr7\Utils;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
@@ -57,6 +58,8 @@ class Prepr
 
     protected function request()
     {
+        $this->statusCode = null;
+
         $this->url = $this->baseUrl.$this->path.($this->query ? '?'.http_build_query($this->query) : '');
 
         // Use Laravel Cache if this is requested.
@@ -105,7 +108,11 @@ class Prepr
             }
         }
 
-        $this->request = $this->client->{$this->method}($this->url, $data);
+        try {
+            $this->request = $this->client->{$this->method}($this->url, $data);
+        } catch (ConnectionException $exception) {
+            return $this->handleConnectionException($exception);
+        }
 
         $this->rawResponse = $this->request->body();
         $this->response = json_decode($this->rawResponse, true);
@@ -120,6 +127,42 @@ class Prepr
         }
 
         return $this;
+    }
+
+    protected function handleConnectionException(ConnectionException $exception): self
+    {
+        $timedOut = $this->isTimeoutException($exception);
+        $this->statusCode = $timedOut ? 504 : 502;
+        $key = $timedOut ? 'connection.error.timeout' : 'connection.error.failed';
+
+        $this->response = [
+            'message' => $key,
+            'errors' => [
+                'connection' => [$key],
+            ],
+        ];
+        $this->rawResponse = json_encode($this->response);
+
+        return $this;
+    }
+
+    protected function isTimeoutException(ConnectionException $exception): bool
+    {
+        $message = strtolower($exception->getMessage());
+
+        if (str_contains($message, 'timed out') || str_contains($message, 'timeout')) {
+            return true;
+        }
+
+        $previous = $exception->getPrevious();
+        $context = ($previous && method_exists($previous, 'getHandlerContext'))
+            ? $previous->getHandlerContext()
+            : [];
+
+        $errno = $context['errno'] ?? $context['curl_errno'] ?? null;
+        $timeoutErrno = defined('CURLE_OPERATION_TIMEDOUT') ? CURLE_OPERATION_TIMEDOUT : 28;
+
+        return $errno === $timeoutErrno;
     }
 
     public function authorization(string $authorization): self
@@ -274,7 +317,7 @@ class Prepr
 
     public function getStatusCode(): int
     {
-        if ($this->statusCode) {
+        if ($this->statusCode !== null) {
             return $this->statusCode;
         }
 
