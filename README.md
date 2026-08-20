@@ -135,6 +135,17 @@ $apiRequest = (new Prepr)
 
 The authorization can also be set for one specific request `->url('url')->authorization('token')`.
 
+### Override the timeout in a request
+
+The default timeout comes from `PREPR_TIMEOUT` (or `config/prepr.php`). You can override it for a single request:
+
+```php
+$apiRequest = (new Prepr)
+    ->path('publications')
+    ->timeout(120)
+    ->get();
+```
+
 ## Autopaging
 
 ```php
