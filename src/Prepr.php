@@ -136,6 +136,13 @@ class Prepr
         return $this;
     }
 
+    public function timeout(int $timeout): self
+    {
+        $this->timeout = $timeout;
+
+        return $this;
+    }
+
     public function asJson(): self
     {
         $this->asJson = true;

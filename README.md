@@ -5,7 +5,7 @@ This Laravel package is a provider for the Prepr REST API.
 ## Basics
 
 - The SDK on [GitHub](https://github.com/preprio/laravel-rest-sdk)  
-- Compatible with Laravel `v5x`, `v6x`, `v7x`, `v8x`, `v9x`, `v10x`, `v11x`, `v12x`.
+- Compatible with Laravel `v8x`, `v9x`, `v10x`, `v11x`, `v12x`.
 - Requires `GuzzleHttp 7.3.X`, and for version 3.0 and above PHP 8.x is required.
 
 ## Installation
@@ -22,18 +22,6 @@ For Laravel v9x
 
 ```bash
 composer require preprio/laravel-rest-sdk:"^2.0"
-```
-
-For Laravel v8x
-
-```bash
-composer require preprio/laravel-rest-sdk:"^1.3"
-```
-
-Other versions
-
-```bash
-composer require preprio/laravel-rest-sdk:"1.1"
 ```
 
 ### Publish config
@@ -134,6 +122,17 @@ $apiRequest = (new Prepr)
 ### Override the AccessToken in a request
 
 The authorization can also be set for one specific request `->url('url')->authorization('token')`.
+
+### Override the timeout in a request
+
+The default timeout comes from `PREPR_TIMEOUT` (or `config/prepr.php`). You can override it for a single request:
+
+```php
+$apiRequest = (new Prepr)
+    ->path('publications')
+    ->timeout(120)
+    ->get();
+```
 
 ## Autopaging
 
