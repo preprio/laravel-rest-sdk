@@ -19,7 +19,7 @@ class Prepr
     // Request
     protected object $client;
     protected string $baseUrl;
-    protected null|string $authorization;
+    protected ?string $authorization;
     protected string $url;
     protected string $path;
     protected string $method;
@@ -27,7 +27,7 @@ class Prepr
     protected mixed $query = null;
     protected mixed $params = null;
     protected array $headers = [];
-    protected null|array $attach = null;
+    protected ?array $attach = null;
     protected bool $asJson = false;
 
     // Settings
@@ -38,9 +38,9 @@ class Prepr
     protected int $connectTimeout;
 
     // Response
-    protected array|null $response;
+    protected ?array $response;
     protected string $rawResponse;
-    protected int|null $statusCode = null;
+    protected ?int $statusCode = null;
 
     public function __construct()
     {
@@ -90,7 +90,6 @@ class Prepr
             $this->client->asJson();
         } else {
             if ($this->method == 'post') {
-                
                 // Fix for Laravel bug https://github.com/laravel/framework/issues/43710
                 $this->client->asMultipart();
 
