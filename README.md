@@ -38,12 +38,6 @@ For Laravel v9x:
 composer require preprio/laravel-rest-sdk:"^2.0"
 ```
 
-For Laravel v8x:
-
-```bash
-composer require preprio/laravel-rest-sdk:"^1.3"
-```
-
 ### Publish config
 
 Publish `prepr.php` config
