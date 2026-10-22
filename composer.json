@@ -10,14 +10,31 @@
         }
     ],
     "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
-        "php": "^8.0",
-        "guzzlehttp/guzzle": "^7.3|^8.0"
+        "php": "^8.2",
+        "guzzlehttp/guzzle": "^7.3|^8.0",
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/http": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0"
     },
+    "require-dev": {
+        "orchestra/testbench": "^10.0|^11.0",
+        "phpunit/phpunit": "^11.0|^12.0|^13.0"
+    },
+
     "autoload": {
         "psr-4": {
             "Preprio\\": "src/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Preprio\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
     },
     "extra": {
         "laravel": {
@@ -28,5 +45,8 @@
                 "Prepr": "Preprio\\PreprFacade"
             }
         }
+    },
+    "config": {
+        "sort-packages": true
     }
 }

@@ -4,24 +4,44 @@ This Laravel package is a provider for the Prepr REST API.
 
 ## Basics
 
-- The SDK on [GitHub](https://github.com/preprio/laravel-rest-sdk)  
-- Compatible with Laravel `v8x`, `v9x`, `v10x`, `v11x`, `v12x`.
-- Requires `GuzzleHttp ^7.3 or ^8.0`, and for version 3.0 and above PHP 8.x is required.
+- The SDK on [GitHub](https://github.com/preprio/laravel-rest-sdk)
+- Supported: Laravel `v12x` and `v13x` (SDK `^5.0`)
+- Requires PHP `^8.2` and `GuzzleHttp ^7.3 or ^8.0`
+
+Older SDK releases for Laravel 8 to 11 remain available on Packagist, but are **no longer supported** (no bug fixes or security updates). Upgrade to Laravel 12 or 13 and SDK `^5.0` when you can.
 
 ## Installation
 
 You can install the Provider as a composer package.
 
-For Laravel v10x, v11x and Laravel v12x
+### Supported
+
+For Laravel v12x and v13x:
+
+```bash
+composer require preprio/laravel-rest-sdk:"^5.0"
+```
+
+### Unsupported (legacy)
+
+These constraints still install, but those SDK lines are end of support:
+
+For Laravel v10x and v11x:
 
 ```bash
 composer require preprio/laravel-rest-sdk:"^4.0"
 ```
 
-For Laravel v9x
+For Laravel v9x:
 
 ```bash
 composer require preprio/laravel-rest-sdk:"^2.0"
+```
+
+For Laravel v8x:
+
+```bash
+composer require preprio/laravel-rest-sdk:"^1.3"
 ```
 
 ### Publish config
@@ -48,6 +68,8 @@ To make use of the caching feature of Laravel, add the following parameters to y
 PREPR_CACHE=true
 PREPR_CACHE_TIME=1800
 ```
+
+When enabled, only `GET` responses are cached. The SDK stores the HTTP status code and response body (not the HTTP client response object), then rebuilds a normal response on cache hits so `getStatusCode()`, `getResponse()` and `getRawResponse()` keep working the same way.
 
 ## Optional options
 
@@ -280,3 +302,10 @@ if($apiRequest->getStatusCode() == 200) {
 ### Debug
 
 For debug you can use `getRawResponse()`
+
+## Testing
+
+```bash
+composer install
+composer test
+```

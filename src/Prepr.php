@@ -4,6 +4,7 @@ namespace Preprio;
 
 use Cache;
 use GuzzleHttp\Psr7\LimitStream;
+use GuzzleHttp\Psr7\Response as PsrResponse;
 use GuzzleHttp\Psr7\Utils;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
@@ -11,18 +12,22 @@ use Illuminate\Support\Facades\Http;
 
 class Prepr
 {
+    protected const CACHE_VERSION = 1;
+
+    protected const CACHE_KEY_PREFIX = 'prepr.rest.v1.';
+
     // Request
     protected object $client;
     protected string $baseUrl;
-    protected null|string $authorization;
+    protected ?string $authorization;
     protected string $url;
     protected string $path;
     protected string $method;
-    protected Response $request;
+    protected ?Response $request = null;
     protected mixed $query = null;
     protected mixed $params = null;
     protected array $headers = [];
-    protected null|array $attach = null;
+    protected ?array $attach = null;
     protected bool $asJson = false;
 
     // Settings
@@ -33,9 +38,9 @@ class Prepr
     protected int $connectTimeout;
 
     // Response
-    protected array|null $response;
+    protected ?array $response;
     protected string $rawResponse;
-    protected int|null $statusCode = null;
+    protected ?int $statusCode = null;
 
     public function __construct()
     {
@@ -59,22 +64,12 @@ class Prepr
     protected function request()
     {
         $this->statusCode = null;
+        $this->request = null;
 
         $this->url = $this->baseUrl.$this->path.($this->query ? '?'.http_build_query($this->query) : '');
 
-        // Use Laravel Cache if this is requested.
-        $cacheHash = null;
-        if ($this->method == 'get' && $this->cache) {
-            $cacheHash = md5($this->url.$this->authorization);
-
-            if (Cache::has($cacheHash)) {
-                $data = Cache::get($cacheHash);
-
-                $this->request = data_get($data, 'request');
-                $this->response = data_get($data, 'response');
-
-                return $this;
-            }
+        if ($this->method === 'get' && $this->cache && $this->restoreCachedResponse()) {
+            return $this;
         }
 
         // Get HTTP Client.
@@ -91,11 +86,10 @@ class Prepr
         // Set params as request body.
         $data = $this->params;
 
-        if ($this->asJson || $this->method == 'get') {
+        if ($this->asJson || $this->method === 'get') {
             $this->client->asJson();
         } else {
             if ($this->method == 'post') {
-                
                 // Fix for Laravel bug https://github.com/laravel/framework/issues/43710
                 $this->client->asMultipart();
 
@@ -109,24 +103,71 @@ class Prepr
         }
 
         try {
-            $this->request = $this->client->{$this->method}($this->url, $data);
+            $httpResponse = $this->client->{$this->method}($this->url, $data);
         } catch (ConnectionException $exception) {
             return $this->handleConnectionException($exception);
         }
 
-        $this->rawResponse = $this->request->body();
-        $this->response = json_decode($this->rawResponse, true);
-
-        // If caching is enabled, save it to the cache.
-        if ($this->cache) {
-
-            Cache::put($cacheHash, [
-                'request' => $this->request,
-                'response' => $this->response,
-            ], $this->cacheTime);
-        }
+        $this->rememberResponse(
+            $httpResponse->status(),
+            $httpResponse->body(),
+            $httpResponse
+        );
+        $this->storeCachedResponse();
 
         return $this;
+    }
+
+    /**
+     * Normalize a successful response so live and cached results share the same state.
+     */
+    protected function rememberResponse(int $statusCode, string $body, ?Response $httpResponse = null): void
+    {
+        $this->statusCode = $statusCode;
+        $this->rawResponse = $body;
+        $this->response = json_decode($body, true);
+        $this->request = $httpResponse ?? new Response(
+            new PsrResponse($statusCode, ['Content-Type' => 'application/json'], $body)
+        );
+    }
+
+    protected function cacheKey(): string
+    {
+        return self::CACHE_KEY_PREFIX.md5($this->url.$this->authorization);
+    }
+
+    protected function restoreCachedResponse(): bool
+    {
+        $payload = Cache::get($this->cacheKey());
+
+        if (! $this->isCachePayload($payload)) {
+            return false;
+        }
+
+        $this->rememberResponse($payload['status'], $payload['body']);
+
+        return true;
+    }
+
+    protected function storeCachedResponse(): void
+    {
+        if ($this->method !== 'get' || ! $this->cache) {
+            return;
+        }
+
+        Cache::put($this->cacheKey(), [
+            'version' => self::CACHE_VERSION,
+            'status' => $this->statusCode,
+            'body' => $this->rawResponse,
+        ], $this->cacheTime);
+    }
+
+    protected function isCachePayload(mixed $payload): bool
+    {
+        return is_array($payload)
+            && ($payload['version'] ?? null) === self::CACHE_VERSION
+            && is_int($payload['status'] ?? null)
+            && is_string($payload['body'] ?? null);
     }
 
     protected function handleConnectionException(ConnectionException $exception): self
@@ -142,6 +183,7 @@ class Prepr
             ],
         ];
         $this->rawResponse = json_encode($this->response);
+        $this->request = null;
 
         return $this;
     }
